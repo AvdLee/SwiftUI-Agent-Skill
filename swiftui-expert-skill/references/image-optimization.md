@@ -117,24 +117,23 @@ struct OptimizedImageView: View {
         }
     }
     
+    @concurrent
     private func decodeAndDownsample(_ data: Data, targetSize: CGSize) async -> UIImage? {
-        await Task.detached {
-            guard let source = CGImageSourceCreateWithData(data as CFData, nil) else {
-                return nil
-            }
-            
-            let options: [CFString: Any] = [
-                kCGImageSourceThumbnailMaxPixelSize: max(targetSize.width, targetSize.height),
-                kCGImageSourceCreateThumbnailFromImageAlways: true,
-                kCGImageSourceCreateThumbnailWithTransform: true
-            ]
-            
-            guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else {
-                return nil
-            }
-            
-            return UIImage(cgImage: cgImage)
-        }.value
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else {
+            return nil
+        }
+
+        let options: [CFString: Any] = [
+            kCGImageSourceThumbnailMaxPixelSize: max(targetSize.width, targetSize.height),
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true
+        ]
+
+        guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else {
+            return nil
+        }
+
+        return UIImage(cgImage: cgImage)
     }
 }
 
