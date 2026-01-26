@@ -151,8 +151,7 @@ struct GoodView: View {
 ```
 
 ### @StateObject instantiation in View's initializer
-
-If you need to create a @StateObject with initialization parameters in your view's custom initializer, be aware of redundant allocations and hidden side effects. Kudos to Vincent Pradeilles.
+If you need to create a @StateObject with initialization parameters in your view's custom initializer, be aware of redundant allocations and hidden side effects.
 
 ```swift
 // WRONG - creates a new ViewModel instance each time the view's initializer is called
