@@ -28,12 +28,22 @@ jobs:
       - name: Bump plugin.json version
         run: |
           jq --arg v "$VERSION" '.version = $v' .claude-plugin/plugin.json > .claude-plugin/plugin.json.tmp
-          mv .claude-plugin/plugin.json.tmp .claude-plugin/plugin.json
+          if [ -s .claude-plugin/plugin.json.tmp ]; then
+            mv .claude-plugin/plugin.json.tmp .claude-plugin/plugin.json
+          else
+            echo "Error: Failed to generate updated .claude-plugin/plugin.json"
+            exit 1
+          fi
 
       - name: Bump marketplace.json versions
         run: |
           jq --arg v "$VERSION" '.version = $v | .plugins[0].version = $v' .claude-plugin/marketplace.json > .claude-plugin/marketplace.json.tmp
-          mv .claude-plugin/marketplace.json.tmp .claude-plugin/marketplace.json
+          if [ -s .claude-plugin/marketplace.json.tmp ]; then
+            mv .claude-plugin/marketplace.json.tmp .claude-plugin/marketplace.json
+          else
+            echo "Error: Failed to generate updated .claude-plugin/marketplace.json"
+            exit 1
+          fi
 
       - name: Commit and push version bump
         run: |
