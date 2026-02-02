@@ -147,3 +147,9 @@ Created by [Antoine van der Lee](https://www.avanderlee.com) and [Omar Elsayed](
 ## License
 
 This skill is open-source and available under the MIT License. See [LICENSE](LICENSE) for details.
+
+## Compatible Agents
+
+This skill works with:
+- [Claude Code](https://claude.com/product/claude-code)
+- [AdaL](https://sylph.ai/) - Self-evolving AI coding agent ([Docs](https://docs.sylph.ai/) | [GitHub](https://github.com/SylphAI-Inc/adal-cli))
