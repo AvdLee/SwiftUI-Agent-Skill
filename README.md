@@ -147,3 +147,11 @@ Created by [Antoine van der Lee](https://www.avanderlee.com) and [Omar Elsayed](
 ## License
 
 This skill is open-source and available under the MIT License. See [LICENSE](LICENSE) for details.
+
+## Compatible Agents
+
+This skill works with:
+
+- [Claude Code](https://claude.ai/code) - Anthropic's official CLI
+- [AdaL](https://sylph.ai/adal) - Self-evolving AI coding agent with MCP support
+
