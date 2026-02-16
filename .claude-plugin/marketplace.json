@@ -41,10 +41,7 @@
         "performance",
         "liquid-glass"
       ],
-      "source": "./",
-      "skills": [
-        "./swiftui-expert-skill"
-      ]
+      "source": "./"
     }
   ]
 }
