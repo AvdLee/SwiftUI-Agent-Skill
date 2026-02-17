@@ -12,6 +12,7 @@ This repository distills practical SwiftUI best practices into actionable, conci
 ## See also my other skills:
 - [Swift Concurrency Expert](https://github.com/AvdLee/Swift-Concurrency-Agent-Skill)
 - [Core Data Expert](https://github.com/AvdLee/Core-Data-Agent-Skill)
+- [Swift Testing Expert](https://github.com/AvdLee/Swift-Testing-Agent-Skill)
 
 ## How to Use This Skill
 
