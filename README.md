@@ -141,6 +141,14 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
 - Format requirements and quality standards
 - Pull request process
 
+## Acknowledgments
+
+Several SwiftUI guidelines in this skill were inspired by or derived from the following works:
+
+- [SwiftAgents](https://github.com/twostraws/SwiftAgents) by [Paul Hudson](https://www.hackingwithswift.com) — an AGENTS.md for Swift and SwiftUI projects based on his article [What to fix in AI-generated Swift code](https://www.hackingwithswift.com/articles/281/what-to-fix-in-ai-generated-swift-code). His curation of modern SwiftUI best practices for AI agents has been the foundation for this skill.
+- AGENTS file input from the developers of [Helm for App Store Connect](https://helm-app.com)
+- [Skills](https://github.com/Dimillian/Skills) by [Thomas Ricouard](https://github.com/Dimillian) — a collection of SwiftUI-focused Codex skills covering UI patterns, performance auditing, and Liquid Glass.
+
 ## About the authors
 
 Created by [Antoine van der Lee](https://www.avanderlee.com) and [Omar Elsayed](https://www.swiftdifferently.com). With years of experience in Swift & SwiftUI, this skill distills practical knowledge into actionable guidance for AI assistants. Antoine [published tens of articles on SwiftUI](https://www.avanderlee.com/category/swiftui/) on his blog called SwiftLee.
