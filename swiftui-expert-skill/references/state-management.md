@@ -100,6 +100,74 @@ struct DisplayView: View {
 }
 ```
 
+## @FocusState
+
+Use `@FocusState` to control text input focus in SwiftUI. Choose the focus value type based on how many fields the view manages.
+
+### Bool vs enum
+
+- Use `@FocusState private var isFocused: Bool` when the view has a single focusable field.
+- Use a `Hashable` enum optional value for multiple fields, for better readability and type safety.
+
+### Single Field: Bool
+
+`Bool` keeps the code simple when there is only one field to focus.
+
+```swift
+struct LoginView: View {
+    @State private var email = ""
+    @FocusState private var isEmailFocused: Bool
+
+    var body: some View {
+        TextField("Email", text: $email)
+            .focused($isEmailFocused)
+            .onAppear {
+                isEmailFocused = true
+            }
+    }
+}
+```
+
+### Multiple Fields: Enum (Preferred)
+
+Use a `Hashable` enum optional focus value when a view manages multiple fields. This keeps focus transitions readable and type-safe.
+
+```swift
+struct SignUpView: View {
+    enum Field: Hashable {
+        case name
+        case email
+        case password
+    }
+
+    @State private var name = ""
+    @State private var email = ""
+    @State private var password = ""
+    @FocusState private var focusedField: Field?
+
+    var body: some View {
+        Form {
+            TextField("Name", text: $name)
+                .focused($focusedField, equals: .name)
+
+            TextField("Email", text: $email)
+                .focused($focusedField, equals: .email)
+
+            SecureField("Password", text: $password)
+                .focused($focusedField, equals: .password)
+
+            Button("Next") {
+                switch focusedField {
+                case .name: focusedField = .email
+                case .email: focusedField = .password
+                default: focusedField = nil
+                }
+            }
+        }
+    }
+}
+```
+
 ## @StateObject vs @ObservedObject (Legacy - Pre-iOS 17)
 
 **Note**: These are legacy patterns. Always prefer `@Observable` with `@State` for iOS 17+.

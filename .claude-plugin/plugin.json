@@ -1,6 +1,6 @@
 {
   "name": "swiftui-expert",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "description": "Expert SwiftUI guidance for state management, view composition, performance, and iOS 26+ Liquid Glass adoption.",
   "author": {
     "name": "Antoine van der Lee",
