@@ -61,27 +61,10 @@ This document provides guidance for AI agents working with this skill to ensure 
 
 **Do not automatically apply optimizations.** Let developers decide based on their performance needs.
 
-### Modern API Usage
-
-**Enforce modern API usage for correctness:**
-- ✅ `foregroundStyle()` instead of `foregroundColor()`
-- ✅ `NavigationStack` instead of `NavigationView`
-- ✅ `@Observable` instead of `ObservableObject` for new code
-
-These are about using current, non-deprecated APIs, not optimization.
-
-### State Management
-
-**Be clear about `@MainActor` requirements:**
-- Mention that `@Observable` classes may need `@MainActor`
-- Note that projects with default actor isolation don't need explicit `@MainActor`
-- Don't mandate it as "always required"
-
 ## What to Include
 
 ### ✅ Include These Topics:
 - Property wrapper selection (`@State`, `@Binding`, `@Observable`, etc.)
-- Modern API replacements for deprecated APIs
 - View composition and extraction patterns
 - Performance patterns (stable identity, lazy loading, etc.)
 - Common pitfalls and how to avoid them
@@ -102,7 +85,6 @@ These are about using current, non-deprecated APIs, not optimization.
 ## Language and Tone
 
 ### Use Clear, Direct Language:
-- "Use X instead of Y" (for deprecated APIs)
 - "Consider X when Y" (for optimizations)
 - "Avoid X because Y" (for anti-patterns)
 - "X is preferred over Y" (for best practices)

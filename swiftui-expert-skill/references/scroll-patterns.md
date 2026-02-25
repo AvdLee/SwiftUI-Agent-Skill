@@ -1,24 +1,5 @@
 # SwiftUI ScrollView Patterns Reference
 
-## ScrollView Modifiers
-
-### Hiding Scroll Indicators
-
-**Use `.scrollIndicators(.hidden)` modifier instead of initializer parameter.**
-
-```swift
-// Modern (Correct)
-ScrollView {
-    content
-}
-.scrollIndicators(.hidden)
-
-// Legacy (Avoid)
-ScrollView(showsIndicators: false) {
-    content
-}
-```
-
 ## ScrollViewReader for Programmatic Scrolling
 
 **Use `ScrollViewReader` for scroll-to-top, scroll-to-bottom, and anchor-based jumps.**
@@ -295,7 +276,6 @@ struct SnapScrollView: View {
 
 ## Summary Checklist
 
-- [ ] Use `.scrollIndicators(.hidden)` instead of initializer parameter
 - [ ] Use `ScrollViewReader` with stable IDs for programmatic scrolling
 - [ ] Always use explicit animations with `scrollTo()`
 - [ ] Use `.visualEffect` for scroll-based visual changes

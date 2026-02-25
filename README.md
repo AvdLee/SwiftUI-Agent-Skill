@@ -1,6 +1,6 @@
 # SwiftUI Expert Skill
 
-Expert guidance for any AI coding tool that supports the [Agent Skills open format](https://agentskills.io/home) — modern SwiftUI APIs, state management, performance, and iOS 26+ Liquid Glass adoption.
+Expert guidance for any AI coding tool that supports the [Agent Skills open format](https://agentskills.io/home) — SwiftUI state management, view composition, performance, and iOS 26+ Liquid Glass adoption.
 
 This repository distills practical SwiftUI best practices into actionable, concise references for agents and code review workflows.
 
@@ -26,7 +26,7 @@ npx skills add https://github.com/avdlee/swiftui-agent-skill --skill swiftui-exp
 For more information, [visit the skills.sh platform page](https://skills.sh/avdlee/swiftui-agent-skill/swiftui-expert-skill).
 
 Then use the skill in your AI agent, for example:
-> Use the swiftui expert skill and review the current SwiftUI code for state-management and modern API improvements
+> Use the swiftui expert skill and review the current SwiftUI code for state-management and performance improvements
 
 ### Option B: Claude Code Plugin
 
@@ -87,7 +87,6 @@ This skill gives your AI coding tool practical SwiftUI guidance. It can:
 
 ### Guide Your SwiftUI Decisions
 - Choose the right state management tool (`@State`, `@Binding`, `@Observable`, `@Bindable`)
-- Recommend modern replacements for deprecated SwiftUI APIs
 - Provide clear guidance for sheets, navigation, scrolling, and lists
 - Advise on iOS 26+ Liquid Glass usage with safe availability fallbacks
 
@@ -103,9 +102,7 @@ This skill gives your AI coding tool practical SwiftUI guidance. It can:
 
 ## What Makes This Skill Different
 
-**Non-Opinionated**: Focuses on SwiftUI correctness and modern APIs, not forcing an architecture, project structure, or code style.
-
-**Modern-first**: Calls out deprecated APIs and offers up-to-date replacements.
+**Non-Opinionated**: Focuses on SwiftUI correctness, not forcing an architecture, project structure, or code style.
 
 **Practical & concise**: Treats the agent as capable; provides the checklists and pitfalls that actually matter in day-to-day SwiftUI work.
 
@@ -122,12 +119,10 @@ swiftui-expert-skill/
     layout-best-practices.md - Layout patterns and GeometryReader alternatives
     liquid-glass.md - iOS 26+ glass effects and fallback patterns
     list-patterns.md - ForEach identity and list performance
-    modern-apis.md - Deprecated API replacements
     performance-patterns.md - Hot-path optimizations and update control
     scroll-patterns.md - ScrollViewReader and programmatic scrolling
     sheet-navigation-patterns.md - Sheets and type-safe navigation
     state-management.md - Property wrapper selection and data flow
-    text-formatting.md - Modern Text formatting and string utilities
     view-structure.md - View extraction and composition patterns
 ```
 <!-- END REFERENCE STRUCTURE -->
@@ -145,8 +140,6 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
 
 Several SwiftUI guidelines in this skill were inspired by or derived from the following works:
 
-- [SwiftAgents](https://github.com/twostraws/SwiftAgents) by [Paul Hudson](https://www.hackingwithswift.com) — an AGENTS.md for Swift and SwiftUI projects based on his article [What to fix in AI-generated Swift code](https://www.hackingwithswift.com/articles/281/what-to-fix-in-ai-generated-swift-code). His curation of modern SwiftUI best practices for AI agents has been the foundation for this skill.
-- AGENTS file input from the developers of [Helm for App Store Connect](https://helm-app.com)
 - [Skills](https://github.com/Dimillian/Skills) by [Thomas Ricouard](https://github.com/Dimillian) — a collection of SwiftUI-focused Codex skills covering UI patterns, performance auditing, and Liquid Glass.
 
 ## About the authors

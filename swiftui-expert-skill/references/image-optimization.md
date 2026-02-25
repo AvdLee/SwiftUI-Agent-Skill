@@ -242,36 +242,6 @@ Image(systemName: "star.square.fill")
 Image(systemName: "folder.badge.plus")
 ```
 
-## Image Rendering
-
-### ImageRenderer for Snapshots
-
-```swift
-// Render SwiftUI view to UIImage
-let renderer = ImageRenderer(content: myView)
-renderer.scale = UIScreen.main.scale
-
-if let uiImage = renderer.uiImage {
-    // Use the image (save, share, etc.)
-}
-
-// Render to CGImage
-if let cgImage = renderer.cgImage {
-    // Use CGImage
-}
-```
-
-### Rendering with Custom Size
-
-```swift
-let renderer = ImageRenderer(content: myView)
-renderer.proposedSize = ProposedViewSize(width: 400, height: 300)
-
-if let uiImage = renderer.uiImage {
-    // Image rendered at 400x300 points
-}
-```
-
 ## Summary Checklist
 
 - [ ] Use `AsyncImage` with proper phase handling
@@ -281,6 +251,5 @@ if let uiImage = renderer.uiImage {
 - [ ] Use appropriate target sizes for downsampling
 - [ ] Consider image caching for frequently accessed images
 - [ ] Use SF Symbols with appropriate rendering modes
-- [ ] Use `ImageRenderer` for rendering SwiftUI views to images
 
 **Performance Note**: Image downsampling is an optional optimization. Only suggest it when you encounter `UIImage(data:)` usage in performance-sensitive contexts like scrollable lists or grids.

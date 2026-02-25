@@ -7,12 +7,12 @@
     "email": "contact@avanderlee.com"
   },
   "metadata": {
-    "description": "SwiftUI best practices for state management, modern APIs, view composition, performance, and iOS 26+ Liquid Glass."
+    "description": "SwiftUI best practices for state management, view composition, performance, and iOS 26+ Liquid Glass."
   },
   "plugins": [
     {
       "name": "swiftui-expert",
-      "description": "Expert SwiftUI guidance for modern APIs, state management, performance, and Liquid Glass patterns.",
+      "description": "Expert SwiftUI guidance for state management, view composition, performance, and Liquid Glass patterns.",
       "repository": "https://github.com/avanderlee/SwiftUI-Agent-Skill",
       "version": "1.1.2",
       "author": {
@@ -27,7 +27,6 @@
         "ios",
         "apple",
         "state-management",
-        "modern-apis",
         "performance",
         "liquid-glass"
       ],
@@ -37,7 +36,6 @@
         "ios",
         "apple",
         "state-management",
-        "modern-apis",
         "performance",
         "liquid-glass"
       ],

@@ -164,17 +164,15 @@ containerRelativeFrame(.horizontal) { width, _ in
 
 ## View Logic and Testability
 
-### Separate View Logic from Views
+### Keep Business Logic in Services and Models
 
-**Place view logic into view models or similar, so it can be tested.**
+**Business logic belongs in services and models, not in views.** Views should stay simple and declarative — orchestrating UI state, not implementing business rules. This makes logic independently testable without requiring view instantiation.
 
-> **iOS 17+**: Use `@Observable` macro with `@State` for view models.
+> **iOS 17+**: Use `@Observable` with `@State`.
 
 ```swift
-// Good - logic in testable model (iOS 17+)
 @Observable
-@MainActor
-final class LoginViewModel {
+final class AuthService {
     var email = ""
     var password = ""
     var isValid: Bool {
@@ -182,34 +180,32 @@ final class LoginViewModel {
     }
 
     func login() async throws {
-        // Business logic here
+        // Business logic here — testable without the view
     }
 }
 
 struct LoginView: View {
-    @State private var viewModel = LoginViewModel()
+    @State private var authService = AuthService()
 
     var body: some View {
         Form {
-            TextField("Email", text: $viewModel.email)
-            SecureField("Password", text: $viewModel.password)
+            TextField("Email", text: $authService.email)
+            SecureField("Password", text: $authService.password)
             Button("Login") {
                 Task {
-                    try? await viewModel.login()
+                    try? await authService.login()
                 }
             }
-            .disabled(!viewModel.isValid)
+            .disabled(!authService.isValid)
         }
     }
 }
 ```
 
-> **iOS 16 and earlier**: Use `ObservableObject` protocol with `@StateObject`.
+> **iOS 16 and earlier**: Use `ObservableObject` with `@StateObject`.
 
 ```swift
-// Good - logic in testable model (iOS 16 and earlier)
-@MainActor
-final class LoginViewModel: ObservableObject {
+final class AuthService: ObservableObject {
     @Published var email = ""
     @Published var password = ""
     var isValid: Bool {
@@ -217,30 +213,30 @@ final class LoginViewModel: ObservableObject {
     }
 
     func login() async throws {
-        // Business logic here
+        // Business logic here — testable without the view
     }
 }
 
 struct LoginView: View {
-    @StateObject private var viewModel = LoginViewModel()
+    @StateObject private var authService = AuthService()
 
     var body: some View {
         Form {
-            TextField("Email", text: $viewModel.email)
-            SecureField("Password", text: $viewModel.password)
+            TextField("Email", text: $authService.email)
+            SecureField("Password", text: $authService.password)
             Button("Login") {
                 Task {
-                    try? await viewModel.login()
+                    try? await authService.login()
                 }
             }
-            .disabled(!viewModel.isValid)
+            .disabled(!authService.isValid)
         }
     }
 }
 ```
 
 ```swift
-// Bad - logic embedded in view
+// Bad - logic embedded in view (not testable)
 struct LoginView: View {
     @State private var email = ""
     @State private var password = ""
@@ -250,7 +246,6 @@ struct LoginView: View {
             TextField("Email", text: $email)
             SecureField("Password", text: $password)
             Button("Login") {
-                // Business logic directly in view - hard to test
                 Task {
                     if !email.isEmpty && password.count >= 8 {
                         // Login logic...
@@ -262,7 +257,7 @@ struct LoginView: View {
 }
 ```
 
-**Note**: This is about separating business logic for testability, not about enforcing specific architectures like MVVM. The goal is to make logic testable while keeping views simple.
+**Note**: This is about making business logic testable, not about enforcing a specific architecture. Whether you call them services, models, or something else — the key is that logic lives outside views where it can be tested independently.
 
 ## Action Handlers
 
@@ -271,10 +266,10 @@ struct LoginView: View {
 ```swift
 // Good - action references method
 struct PublishView: View {
-    @State private var viewModel = PublishViewModel()
+    @State private var publishService = PublishService()
     
     var body: some View {
-        Button("Publish Project", action: viewModel.handlePublish)
+        Button("Publish Project", action: publishService.handlePublish)
     }
 }
 
@@ -306,7 +301,7 @@ struct PublishView: View {
 - [ ] Custom views own static containers
 - [ ] Avoid deep view hierarchies (layout thrash)
 - [ ] Gate frequent geometry updates by thresholds
-- [ ] View logic separated into testable models/classes
+- [ ] Business logic kept in services and models (not in views)
 - [ ] Action handlers reference methods, not inline logic
 - [ ] Avoid excessive `GeometryReader` usage
 - [ ] Use `containerRelativeFrame()` when appropriate
