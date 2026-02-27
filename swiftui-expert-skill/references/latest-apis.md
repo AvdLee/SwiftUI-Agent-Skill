@@ -206,6 +206,29 @@ Text("Score")
     .accessibility(hidden: false)
 ```
 
+### Custom Environment / Container Values
+
+**Always use the `@Entry` macro instead of manual `EnvironmentKey` conformance.** The `@Entry` macro was introduced in Xcode 16 and back-deploys to all OS versions.
+
+```swift
+// Modern
+extension EnvironmentValues {
+    @Entry var myCustomValue: String = "Default value"
+}
+
+// Legacy (unnecessary boilerplate)
+struct MyCustomValueKey: EnvironmentKey {
+    static let defaultValue: String = "Default value"
+}
+
+extension EnvironmentValues {
+    var myCustomValue: String {
+        get { self[MyCustomValueKey.self] }
+        set { self[MyCustomValueKey.self] = newValue }
+    }
+}
+```
+
 ### Styling
 
 **Always use `clipShape(.rect(cornerRadius:))` instead of `cornerRadius()`.**
@@ -425,7 +448,7 @@ Image("photo")
 
 ### Layout
 
-**Prefer `containerRelativeFrame()` or `visualEffect()` over `GeometryReader` when possible.**
+**Consider `containerRelativeFrame()` or `visualEffect()` as alternatives to `GeometryReader` for sizing and position-based effects.** `GeometryReader` is not deprecated and remains necessary for many measurement-based layouts.
 
 ```swift
 // Modern — containerRelativeFrame
@@ -509,29 +532,6 @@ When using `Tab(role:)`, all tabs must use the `Tab` syntax. Mixing `Tab(role:)`
 #Preview {
     @Previewable @State var isOn = false
     Toggle("Setting", isOn: $isOn)
-}
-```
-
-### Custom Environment / Container Values
-
-**Use the `@Entry` macro instead of manual `EnvironmentKey` conformance.**
-
-```swift
-// Modern (iOS 18+)
-extension EnvironmentValues {
-    @Entry var accentColor: Color = .blue
-}
-
-// Legacy
-struct AccentColorKey: EnvironmentKey {
-    static let defaultValue: Color = .blue
-}
-
-extension EnvironmentValues {
-    var accentColor: Color {
-        get { self[AccentColorKey.self] }
-        set { self[AccentColorKey.self] = newValue }
-    }
 }
 ```
 
@@ -623,6 +623,7 @@ TabView {
 | `autocapitalization(_:)` | `textInputAutocapitalization(_:)` | iOS 15+ |
 | `accessibility(label:)` etc. | `accessibilityLabel()` etc. | iOS 15+ |
 | `TextField` `onCommit`/`onEditingChanged` | `onSubmit` + `focused` | iOS 15+ |
+| Manual `EnvironmentKey` | `@Entry` macro | Back-deploys (Xcode 16+) |
 | `NavigationView` | `NavigationStack` / `NavigationSplitView` | iOS 16+ |
 | `accentColor(_:)` | `tint(_:)` | iOS 16+ |
 | `disableAutocorrection(_:)` | `autocorrectionDisabled(_:)` | iOS 16+ |
@@ -631,7 +632,5 @@ TabView {
 | `MagnificationGesture` | `MagnifyGesture` | iOS 17+ |
 | `RotationGesture` | `RotateGesture` | iOS 17+ |
 | `coordinateSpace(name:)` | `coordinateSpace(.named(...))` | iOS 17+ |
-| `GeometryReader` (for sizing) | `containerRelativeFrame()` / `visualEffect()` | iOS 17+ |
 | `ObservableObject` | `@Observable` | iOS 17+ |
 | `tabItem(_:)` | `Tab` API | iOS 18+ |
-| Manual `EnvironmentKey` | `@Entry` macro | iOS 18+ |
