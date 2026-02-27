@@ -150,8 +150,6 @@ Button("Confirm") { }
 ### Latest APIs (see `references/latest-apis.md`)
 - [ ] No deprecated modifiers used (check against the quick lookup table)
 - [ ] API choices match the project's minimum deployment target
-- [ ] iOS 17+: Using `@Observable` instead of `ObservableObject` for new code
-- [ ] iOS 17+: Using modern `onChange(of:)` variant (not `onChange(of:perform:)`)
 
 ### State Management
 - [ ] `@State` properties are `private`
