@@ -117,6 +117,7 @@ swiftui-expert-skill/
     animation-basics.md - Core animation concepts, implicit/explicit animations, timing
     animation-transitions.md - View transitions, matchedGeometryEffect, and state changes
     image-optimization.md - AsyncImage usage, downsampling, caching
+    latest-apis.md
     layout-best-practices.md - Layout patterns and GeometryReader alternatives
     liquid-glass.md - iOS 26+ glass effects and fallback patterns
     list-patterns.md - ForEach identity and list performance
