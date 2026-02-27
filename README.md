@@ -129,6 +129,19 @@ swiftui-expert-skill/
 ```
 <!-- END REFERENCE STRUCTURE -->
 
+## Maintenance
+
+The repository includes a maintenance skill for keeping API guidance current:
+
+```text
+.agents/skills/update-swiftui-apis/
+  SKILL.md               - Workflow for scanning Apple docs and updating latest-apis.md
+  references/
+    scan-manifest.md     - Categorized API areas, doc paths, and search queries to scan
+```
+
+Use this skill after new iOS or Xcode releases to refresh the deprecated API reference. It requires the [Sosumi MCP](https://github.com/nicklama/sosumi) to be available. See `AGENTS.md` or `CONTRIBUTING.md` for details.
+
 ## Contributing
 
 Contributions are welcome! This repository follows the [Agent Skills open format](https://agentskills.io/home), which has specific structural requirements.

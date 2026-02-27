@@ -22,6 +22,10 @@ If you use the `skill-creator` skill, you can:
 - Edit Markdown files directly
 - Ensure headings and checklists stay consistent
 
+## Updating Latest API Guidance
+
+To refresh the deprecated-to-modern API reference after a new iOS or Xcode release, use the maintenance skill at `.agents/skills/update-swiftui-apis/SKILL.md`. It walks through scanning Apple's documentation via the Sosumi MCP and updating `swiftui-expert-skill/references/latest-apis.md` with new findings.
+
 ## Types of Contributions
 - Fix incorrect SwiftUI guidance
 - Add new modern APIs or deprecations

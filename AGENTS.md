@@ -132,6 +132,12 @@ When adding new content:
 
 If unsure, err on the side of excluding content. It's better to have a focused, factual skill than a comprehensive but opinionated one.
 
+## Maintenance Skills
+
+This repository includes a maintenance skill for keeping API guidance up to date:
+
+- **`.agents/skills/update-swiftui-apis/SKILL.md`** — Scan Apple's SwiftUI documentation via the Sosumi MCP, identify deprecated APIs and their modern replacements, and update `swiftui-expert-skill/references/latest-apis.md`. Use after new iOS/Xcode releases or when you want to refresh the deprecated API reference.
+
 ## Summary
 
 **Focus**: SwiftUI APIs, patterns, and correctness
