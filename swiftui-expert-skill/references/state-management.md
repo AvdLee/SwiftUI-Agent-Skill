@@ -56,6 +56,37 @@ struct MyView: View {
 
 **Note**: You may want to mark `@Observable` classes with `@MainActor` to ensure thread safety with SwiftUI, unless your project or package uses Default Actor Isolation set to `MainActor`—in which case, the explicit attribute is redundant and can be omitted.
 
+## Property Wrappers Inside @Observable Classes
+
+**Critical**: The `@Observable` macro transforms stored properties to add observation tracking. Property wrappers (like `@AppStorage`, `@SceneStorage`, `@Query`) also transform properties with their own storage. These two transformations conflict, causing a compiler error.
+
+**Always annotate property-wrapper properties with `@ObservationIgnored` inside `@Observable` classes.**
+
+```swift
+@Observable
+@MainActor
+final class SettingsModel {
+    // WRONG - compiler error: property wrappers conflict with @Observable
+    // @AppStorage("username") var username = ""
+
+    // CORRECT - @ObservationIgnored prevents the conflict
+    @ObservationIgnored @AppStorage("username") var username = ""
+    @ObservationIgnored @AppStorage("isDarkMode") var isDarkMode = false
+
+    // Regular stored properties work fine with @Observable
+    var isLoading = false
+}
+```
+
+This applies to **any** property wrapper used inside an `@Observable` class, including but not limited to:
+- `@AppStorage`
+- `@SceneStorage`
+- `@Query` (SwiftData)
+
+**Note**: Since `@ObservationIgnored` disables observation tracking for that property, SwiftUI won't detect changes through the Observation framework. However, property wrappers like `@AppStorage` already notify SwiftUI of changes through their own mechanisms (e.g., UserDefaults KVO), so views still update correctly.
+
+**Never remove `@ObservationIgnored`** from property-wrapper properties in `@Observable` classes — doing so causes a compiler error.
+
 ## @Binding
 
 Use only when child view needs to **modify** parent's state. If child only reads the value, use `let` instead.
@@ -538,3 +569,4 @@ struct ChildView: View {
 5. **Always mark `@State` and `@StateObject` as `private`**
 6. **Never declare passed values as `@State` or `@StateObject`**
 7. With `@Observable`, nested objects work fine; with `ObservableObject`, pass nested objects directly to child views
+8. **Always add `@ObservationIgnored` to property wrappers** (e.g., `@AppStorage`, `@SceneStorage`, `@Query`) inside `@Observable` classes — they conflict with the macro's property transformation
