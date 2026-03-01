@@ -140,7 +140,7 @@ The repository includes a maintenance skill for keeping API guidance current:
     scan-manifest.md     - Categorized API areas, doc paths, and search queries to scan
 ```
 
-Use this skill after new iOS or Xcode releases to refresh the deprecated API reference. It requires the [Sosumi MCP](https://github.com/nicklama/sosumi) to be available. See `AGENTS.md` or `CONTRIBUTING.md` for details.
+Use this skill after new iOS or Xcode releases to refresh the deprecated API reference. It requires the [Sosumi MCP](https://github.com/kanaa257/sosumi.ai) to be available. See `AGENTS.md` or `CONTRIBUTING.md` for details.
 
 ## Contributing
 
