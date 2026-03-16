@@ -8,9 +8,6 @@ Expert guidance for any AI coding tool that supports the [Agent Skills open form
 
 This repository distills practical SwiftUI best practices into actionable, concise references for agents and code review workflows.
 
-## Cursor Marketplace Status
-Coming soon: this repository is being prepared as a Cursor plugin and is currently in review for the Cursor Marketplace.
-
 ## Who this is for
 - Teams adopting modern SwiftUI APIs who want quick, correct defaults
 - Developers reviewing or refactoring SwiftUI views and data flow
@@ -23,12 +20,7 @@ Coming soon: this repository is being prepared as a Cursor plugin and is current
 
 ## How to Use This Skill
 
-### Option A: Cursor plugin (coming soon)
-This repository is now packaged for Cursor plugin submission, but the marketplace listing is not live yet.
-
-Once approved, you'll be able to install it from the Cursor Marketplace.
-
-### Option B: Using skills.sh
+### Option A: Using skills.sh
 Install this skill with a single command:
 
 ```bash
@@ -40,7 +32,7 @@ For more information, [visit the skills.sh platform page](https://skills.sh/avdl
 Then use the skill in your AI agent, for example:
 > Use the swiftui expert skill and review the current SwiftUI code for state-management and performance improvements
 
-### Option C: Claude Code Plugin
+### Option B: Claude Code Plugin
 
 #### Personal Usage
 To install this Skill for your personal use in Claude Code:
@@ -56,6 +48,11 @@ To install this Skill for your personal use in Claude Code:
 ```bash
 /plugin install swiftui-expert@swiftui-expert-skill
 ```
+
+### Option C: Cursor plugin (coming soon)
+This repository is now packaged for Cursor plugin submission, but the marketplace listing is not live yet.
+
+Once approved, you'll be able to install it from the Cursor Marketplace.
 
 #### Project Configuration
 To automatically provide this Skill to everyone working in a repository, configure the repository's `.claude/settings.json`:
