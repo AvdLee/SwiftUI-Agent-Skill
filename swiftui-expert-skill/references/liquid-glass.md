@@ -19,6 +19,8 @@
 
 Liquid Glass is Apple's new design language introduced in iOS 26. It provides translucent, dynamic surfaces that respond to content and user interaction. This reference covers the native SwiftUI APIs for implementing Liquid Glass effects.
 
+**Only adopt Liquid Glass when explicitly requested by the user.** Do not proactively convert existing UI to glass effects.
+
 ## Availability
 
 All Liquid Glass APIs require iOS 26 or later. Always provide fallbacks:
