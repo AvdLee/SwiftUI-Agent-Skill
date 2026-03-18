@@ -75,7 +75,16 @@ To automatically provide this Skill to everyone working in a repository, configu
 
 When team members open the project, Claude Code will prompt them to install the Skill.
 
-### Option D: Manual install
+### Option D: Codex / OpenAI-compatible tools
+This repository includes an `agents/openai.yaml` manifest. Copy or symlink the `swiftui-expert-skill/` folder into your Codex skills directory:
+
+```bash
+cp -R swiftui-expert-skill/ "$CODEX_HOME/skills/swiftui-expert-skill"
+```
+
+See [Codex skills documentation](https://developers.openai.com/codex/skills/) for details on where to save skills.
+
+### Option E: Manual install
 1) **Clone** this repository.
 2) **Install or symlink** the `swiftui-expert-skill/` folder following your tool’s official skills installation docs (see links below).
 3) **Use your AI tool** as usual and ask it to use the “swiftui-expert” skill for SwiftUI tasks.
