@@ -356,6 +356,56 @@ struct TipTable: View {
 }
 ```
 
+### Table with Dynamic Number of Rows
+
+> **Availability:** iOS 17.4+, iPadOS 17.4+, Mac Catalyst 17.4+, macOS 14.4+, visionOS 1.1+
+
+If the number of columns is not known at runtime use `TableColumnForEach` to create columns based on a `RandomAccessCollection` of some data type. Either the collection’s elements must conform to `Identifiable` or you need to provide an id parameter to the `TableColumnForEach` initializer.
+
+This can be mixed with static compile time known `TableColumn` usage.
+
+```swift
+struct AudioChannel: Identifiable {
+    let name: String
+    let id: UUID
+}
+
+struct AudioSample: Identifiable {
+    let id: UUID
+    let timestamp: TimeInterval
+    func level(channel: AudioChannel.ID) -> Double
+}
+
+@Observable
+class AudioSampleTrack {
+    let channels: [AudioChannel]
+    var samples: some RandomAccessCollection<AudioSample> { get }
+}
+
+struct ContentView: View {
+    var track: AudioSampleTrack
+
+    var body: some View {
+        Table(track.samples) {
+            TableColumn("Timestamp (ms)") { sample in
+                Text(sample.timestamp, format: .number.scale(1000))
+                    .monospacedDigit()
+            }
+            TableColumnForEach(track.channels) { channel in
+                TableColumn(channel.name) { sample in
+                    Text(sample.level(channel: channel.id),
+                         format: .number.precision(.fractionLength(2))
+                    )
+                    .monospacedDigit()
+                }
+                .width(ideal: 70)
+                .alignment(.numeric)
+            }
+        }
+    }
+}
+```
+
 ### Table Styles
 
 ```swift
