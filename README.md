@@ -92,7 +92,7 @@ See [Codex skills documentation](https://developers.openai.com/codex/skills/) fo
 #### Where to Save Skills
 Follow your tool’s official documentation, here are a few popular ones:
 - **Codex:** [Where to save skills](https://developers.openai.com/codex/skills/#where-to-save-skills)
-- **Claude:** [Using Skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview#using-skills)
+- **Claude:** [Using Skills](https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview)
 - **Cursor:** [Plugins documentation](https://cursor.com/docs/plugins) or [Enabling Skills](https://cursor.com/docs/context/skills#enabling-skills)
 
 **How to verify**:
