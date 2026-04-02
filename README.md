@@ -139,6 +139,7 @@ swiftui-expert-skill/
     animation-transitions.md - View transitions, matchedGeometryEffect, and state changes
     charts-accessibility.md - Charts accessibility, fallback strategies, and WWDC sessions
     charts.md - Swift Charts marks, axes, selection, styling, composition, and Chart3D
+    focus-patterns.md
     image-optimization.md - AsyncImage usage, downsampling, caching
     latest-apis.md
     layout-best-practices.md - Layout patterns and GeometryReader alternatives
