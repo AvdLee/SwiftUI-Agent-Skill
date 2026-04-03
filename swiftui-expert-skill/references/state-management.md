@@ -136,38 +136,9 @@ struct ChildView: View {
 
 ## @FocusState
 
-Use `@FocusState` to control text input focus in SwiftUI. Choose the focus value type based on how many fields the view manages.
+See `references/focus-patterns.md` for comprehensive focus management guidance including `@FocusState`, `@FocusedValue`, `.focusable()`, default focus, and common pitfalls.
 
-### Bool vs enum
-
-- Use `@FocusState private var isFocused: Bool` when the view has a single focusable field.
-- Use a `Hashable` enum optional value for multiple fields, for better readability and type safety.
-
-### Single Field: Bool
-
-```swift
-@FocusState private var isFocused: Bool
-
-TextField("Email", text: $email)
-    .focused($isFocused)
-    .onAppear { isFocused = true }
-```
-
-### Multiple Fields: Enum (Preferred)
-
-Use a `Hashable` enum optional focus value when a view manages multiple fields.
-
-```swift
-enum Field: Hashable { case name, email, password }
-@FocusState private var focusedField: Field?
-
-TextField("Name", text: $name)
-    .focused($focusedField, equals: .name)
-TextField("Email", text: $email)
-    .focused($focusedField, equals: .email)
-```
-
-Set `focusedField = .email` to move focus programmatically; set `nil` to dismiss the keyboard.
+Always mark `@FocusState` as `private`.
 
 ## @StateObject vs @ObservedObject (Legacy - Pre-iOS 17)
 
