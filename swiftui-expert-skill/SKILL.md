@@ -63,6 +63,7 @@ Consult the reference file for each topic relevant to the current task:
 | macOS scenes | `references/macos-scenes.md` |
 | macOS window styling | `references/macos-window-styling.md` |
 | macOS views | `references/macos-views.md` |
+| Text patterns | `references/text-patterns.md` |
 | Deprecated API lookup | `references/latest-apis.md` |
 
 ## Correctness Checklist
@@ -104,3 +105,4 @@ These are hard rules -- violations are always bugs:
 - `references/macos-scenes.md` -- Settings, MenuBarExtra, WindowGroup, multi-window
 - `references/macos-window-styling.md` -- Toolbar styles, window sizing, Commands
 - `references/macos-views.md` -- HSplitView, Table, PasteButton, AppKit interop
+- `references/text-patterns.md` -- Text initializer selection, verbatim vs localized
