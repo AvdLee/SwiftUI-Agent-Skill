@@ -5,10 +5,11 @@ file. A target SwiftUI source file is **optional** — if provided, you can
 cite specific lines; without one, the trace still surfaces view names,
 hot symbols, and high-severity events that tell the user where to look.
 
-The bundled parser reads four lanes for SwiftUI responsiveness (Time
-Profiler, Hangs, Animation Hitches, SwiftUI updates) and exposes two
-discovery modes (`--list-logs`, `--list-signposts`) plus a `--window` flag
-so the agent can focus analysis on a precise slice of the trace.
+The bundled parser reads five lanes for SwiftUI responsiveness (Time
+Profiler, Hangs, Animation Hitches, SwiftUI updates, and the SwiftUI
+cause graph) and exposes three discovery modes (`--list-logs`,
+`--list-signposts`, `--fanin-for`) plus a `--window` flag so the agent
+can focus analysis on a precise slice of the trace.
 
 ## When to invoke
 
@@ -79,6 +80,23 @@ events (and any unpaired begins) go into `events`. All filters are
 AND-combined; `--signpost-name-contains` is case-insensitive substring
 match.
 
+### 4. `--fanin-for` — who keeps invalidating this view?
+
+```bash
+python3 "${SKILL_DIR}/scripts/analyze_trace.py" --trace <path> \
+  --fanin-for "TextStyleModifier" \
+  [--window START_MS:END_MS] \
+  [--top 10]
+```
+
+Returns JSON `{ "matches": [...] }`. Each match names a destination node
+whose fmt string contains the substring (case-insensitive) and lists its
+top incoming source nodes ranked by edge count. Use this after the
+`swiftui` lane names an expensive view and you want to know *why it keeps
+being invalidated*. For the example above, the top source is
+`closure #1 in UserDefaultObserver.Target.GraphAttribute.send()` — the
+canonical signature of an `@AppStorage` / `UserDefaults` feedback storm.
+
 ## Composition pattern — scoping to a slice
 
 When the user says something like "focus on X", "between A and B", or
@@ -130,7 +148,12 @@ Examples:
                    "update_type_breakdown": {"View Body Updates":N, ...} },
       "top_offenders": [ { "view", "total_ms", "count", "avg_ms" } ],
       "high_severity_events": [ { "view", "severity", "duration_ms", "category",
-                                   "update_type", "description" } ] }
+                                   "update_type", "description" } ] },
+    { "lane": "swiftui-causes", "available": true, "schema_used": "swiftui-causes",
+      "metrics": { "total_edges", "unique_sources", "unique_destinations",
+                   "top_labels": {...} },
+      "top_sources":      [ { "source", "edges", "top_destinations": [...] } ],
+      "top_destinations": [ { "destination", "edges", "top_sources":      [...] } ] }
   ],
   "correlations": [
     {
@@ -206,6 +229,36 @@ If the user gave you a specific file, use it to confirm/cite. If they didn't, th
    `swiftui_overlapping_updates` list on each hitch names the views that
    were actively rendering when the frame dropped. Prioritise those.
 
+### Cause graph: finding *why* updates keep happening
+
+The `swiftui` lane tells you *what* is expensive; the `swiftui-causes`
+lane tells you *why* it keeps being triggered. Each edge is "source node
+propagated to destination node" in SwiftUI's attribute graph.
+
+Signatures to watch for in `top_sources`:
+
+- **`closure #1 in UserDefaultObserver.Target.GraphAttribute.send()`** —
+  an `@AppStorage` / `UserDefaults` write is fanning out to every reader.
+  If the destination list contains multiple `@AppStorage <Type>.<prop>`
+  entries with thousands of edges each, you have a feedback storm. Fix
+  by reading each key once at a high level and passing values down, or
+  wrapping settings in a single `@Observable` so only genuine readers
+  invalidate. Route to `references/state-management.md` and
+  `references/performance-patterns.md`.
+- **`EnvironmentWriter: …`** with thousands of edges — a modifier (often
+  `.hoverEffect`, custom environment keys) is applied too widely and
+  being re-installed during every layout pass. Route to
+  `references/view-structure.md`.
+- **`View Creation / Reuse`** as the #1 source — the hierarchy is
+  replacing children rather than mutating in place. Look for ID
+  instability (missing/unstable `.id(…)` on ForEach, type-erased
+  `AnyView` wrappers, conditional structure swaps). Route to
+  `references/list-patterns.md` and `references/view-structure.md`.
+
+When a specific view in `swiftui.high_severity_events` keeps showing up,
+run `--fanin-for "<view name>"` to see the ranked list of sources
+invalidating it.
+
 ### Picking targets from a full-trace analysis
 
 Prioritise from most actionable to least:
@@ -214,12 +267,17 @@ Prioritise from most actionable to least:
    blocking-I/O smells; nearly always fixable by moving work off-main.
 2. **Any `hangs` with `main_running_coverage_pct ≥ 75%`** — CPU-bound
    main-thread work; fix the top `hot_symbols`.
-3. **`hitches` with `narrative == "Potentially expensive app update(s)"`**
+3. **`swiftui-causes.top_sources` with > ~1k edges** — structural
+   invalidation bugs (feedback storms, over-applied modifiers). These
+   are often cheaper to fix than per-view optimisations and collapse
+   many downstream high-severity updates at once.
+4. **`hitches` with `narrative == "Potentially expensive app update(s)"`**
    and overlapping `swiftui_overlapping_updates` — specific views to
    restructure.
-4. **`swiftui.high_severity_events`** — `onChange`, `Gesture`, or `Action
-   Callback` with `duration_ms > ~16` are frame-dropping handlers.
-5. **`swiftui.top_offenders`** — heaviest views by total body time, even
+5. **`swiftui.high_severity_events`** — `onChange`, `Gesture`, or `Action
+   Callback` with `duration_ms > ~16` are frame-dropping handlers. For
+   any that keep firing, run `--fanin-for` to find the source.
+6. **`swiftui.top_offenders`** — heaviest views by total body time, even
    without triggering hitches; candidates for view extraction or
    memoisation (`equatable`, `@ViewBuilder` extraction).
 

@@ -21,6 +21,7 @@ def render(result: dict) -> str:
     _render_hangs(lines, lanes_by_name.get("hangs"))
     _render_hitches(lines, lanes_by_name.get("hitches"))
     _render_swiftui(lines, lanes_by_name.get("swiftui"))
+    _render_causes(lines, lanes_by_name.get("swiftui-causes"))
     _render_correlations(lines, result.get("correlations", []))
 
     return "\n".join(lines).rstrip() + "\n"
@@ -147,6 +148,36 @@ def _render_swiftui(lines: list[str], lane: dict | None) -> None:
                 f"{i}. `{_truncate(e['view'], 60)}` — "
                 f"{e['severity']} ({e['duration_ms']:.2f}ms at {e['start_ms']:.2f}ms){cat}"
             )
+    lines.append("")
+
+
+def _render_causes(lines: list[str], lane: dict | None) -> None:
+    if not lane or not lane.get("available"):
+        lines.extend(_skipped_block("SwiftUI Cause Graph", lane))
+        return
+    m = lane["metrics"]
+    lines.append(
+        f"## SwiftUI Cause Graph — {m['total_edges']:,} edges, "
+        f"{m['unique_sources']} sources → {m['unique_destinations']} destinations"
+    )
+    lines.append("")
+    if lane.get("top_sources"):
+        lines.append("Top sources (who's driving the most updates):")
+        for i, s in enumerate(lane["top_sources"][:5], 1):
+            lines.append(f"{i}. `{_truncate(s['source'], 80)}` — {s['edges']:,} edges")
+            for d in s["top_destinations"][:3]:
+                lines.append(
+                    f"    → `{_truncate(d['destination'], 70)}` {d['edges']:,}"
+                )
+    if lane.get("top_destinations"):
+        lines.append("")
+        lines.append("Top destinations (who's being invalidated most):")
+        for i, d in enumerate(lane["top_destinations"][:5], 1):
+            lines.append(f"{i}. `{_truncate(d['destination'], 80)}` — {d['edges']:,} edges")
+            for s in d["top_sources"][:3]:
+                lines.append(
+                    f"    ← `{_truncate(s['source'], 70)}` {s['edges']:,}"
+                )
     lines.append("")
 
 

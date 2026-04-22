@@ -18,6 +18,7 @@ import sys
 from pathlib import Path
 
 from instruments_parser import (
+    causes,
     correlate,
     events,
     hangs,
@@ -83,6 +84,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     mode_group.add_argument("--signpost-subsystem", type=str, default=None)
     mode_group.add_argument("--signpost-category", type=str, default=None)
+    mode_group.add_argument(
+        "--fanin-for", type=str, default=None,
+        help="Emit incoming cause-graph sources for destinations whose fmt "
+             "contains this substring. Case-insensitive.",
+    )
 
     fmt_group = parser.add_mutually_exclusive_group()
     fmt_group.add_argument("--json-only", action="store_true")
@@ -124,12 +130,24 @@ def main(argv: list[str] | None = None) -> int:
         sys.stdout.write("\n")
         return 0
 
-    # Full four-lane analysis
+    if args.fanin_for:
+        fanin = causes.fanin_for(
+            trace, info.schemas,
+            destination_contains=args.fanin_for,
+            top_k=args.top,
+            window=window_ns,
+        )
+        sys.stdout.write(json.dumps(fanin, indent=2))
+        sys.stdout.write("\n")
+        return 0
+
+    # Full five-lane analysis
     lanes_out = {
-        "time-profiler": time_profiler.analyze(trace, info.schemas, top_n=args.top, window=window_ns),
-        "hangs":         hangs.analyze(trace, info.schemas, top_n=args.top, window=window_ns),
-        "hitches":       hitches.analyze(trace, info.schemas, top_n=args.top, window=window_ns),
-        "swiftui":       swiftui.analyze(trace, info.schemas, top_n=args.top, window=window_ns),
+        "time-profiler":  time_profiler.analyze(trace, info.schemas, top_n=args.top, window=window_ns),
+        "hangs":          hangs.analyze(trace, info.schemas, top_n=args.top, window=window_ns),
+        "hitches":        hitches.analyze(trace, info.schemas, top_n=args.top, window=window_ns),
+        "swiftui":        swiftui.analyze(trace, info.schemas, top_n=args.top, window=window_ns),
+        "swiftui-causes": causes.analyze(trace, info.schemas, top_n=args.top, window=window_ns),
     }
     correlations = correlate.build(
         lanes_out, top_hitches=args.top_hitches, top_symbols=5

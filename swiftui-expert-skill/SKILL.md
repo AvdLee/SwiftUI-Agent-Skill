@@ -79,10 +79,13 @@ Full reference: `references/trace-analysis.md`. Summary of the composition patte
    python3 "${SKILL_DIR}/scripts/analyze_trace.py" --trace <path> \
        --json-only --top 10 [--window START_MS:END_MS]
    ```
-4. **Interpret with `references/trace-analysis.md`** — key tool is `main_running_coverage_pct` inside each correlation (<25% = blocked; ≥75% = CPU-bound).
-5. **Optionally ground in source.** If the user pointed at a file, read it and match view names / user-code symbols against identifiers there. If not, recommend which files to open based on the view names SwiftUI reported.
-6. **Return a prioritised plan.** Cite evidence (coverage %, hot symbol, overlapping view, log timestamp) and route each recommendation to a Topic Router reference.
-7. Only edit code if the user asked for edits.
+4. **Interpret with `references/trace-analysis.md`** — key diagnostics:
+   - `main_running_coverage_pct` inside each correlation (<25% = blocked; ≥75% = CPU-bound).
+   - `swiftui-causes.top_sources` reveals *why* updates keep happening — high-edge-count sources like `UserDefaultObserver.send()` or wide `EnvironmentWriter` entries are structural invalidation bugs. Fixing one often collapses many downstream hot views.
+5. **When a specific view shows as expensive, ask who's invalidating it.** Use `--fanin-for "<view name>"` to get the ranked list of source nodes driving the updates.
+6. **Optionally ground in source.** If the user pointed at a file, read it and match view names / user-code symbols against identifiers there. If not, recommend which files to open based on the view names SwiftUI reported.
+7. **Return a prioritised plan.** Cite evidence (coverage %, hot symbol, overlapping view, log timestamp, cause-graph edges) and route each recommendation to a Topic Router reference.
+8. Only edit code if the user asked for edits.
 
 ### Topic Router
 
