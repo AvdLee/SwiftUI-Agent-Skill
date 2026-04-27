@@ -63,6 +63,7 @@ Consult the reference file for each topic relevant to the current task:
 | macOS window styling | `references/macos-window-styling.md` |
 | macOS views | `references/macos-views.md` |
 | Deprecated API lookup | `references/latest-apis.md` |
+| Testing and previews | `references/testing-previews.md` |
 
 ## Correctness Checklist
 
@@ -78,7 +79,7 @@ These are hard rules -- violations are always bugs:
 - [ ] `.animation(_:value:)` always includes the `value` parameter
 - [ ] iOS 26+ APIs gated with `#available` and fallback provided
 - [ ] `import Charts` present in files using chart types
-
+- [ ] Previews use self-contained mock data; no dependency on live services or network
 ## References
 
 - `references/latest-apis.md` -- **Read first for every task.** Deprecated-to-modern API transitions (iOS 15+ through iOS 26+)
@@ -100,3 +101,4 @@ These are hard rules -- violations are always bugs:
 - `references/macos-scenes.md` -- Settings, MenuBarExtra, WindowGroup, multi-window
 - `references/macos-window-styling.md` -- Toolbar styles, window sizing, Commands
 - `references/macos-views.md` -- HSplitView, Table, PasteButton, AppKit interop
+- `references/testing-previews.md` -- `#Preview` macro, `@Previewable`, mock data patterns, XCTest/XCUITest, snapshot testing, @Observable model testing
