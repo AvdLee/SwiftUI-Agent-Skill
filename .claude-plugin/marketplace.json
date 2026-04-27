@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/anthropics/claude-code/refs/heads/main/marketplace/marketplace.schema.json",
   "name": "swiftui-expert-skill",
-  "version": "2.4.2",
+  "version": "3.0.0",
   "owner": {
     "name": "Antoine van der Lee",
     "email": "contact@avanderlee.com"
@@ -14,7 +14,7 @@
       "name": "swiftui-expert",
       "description": "Expert SwiftUI guidance for state management, view composition, performance, and Liquid Glass patterns.",
       "repository": "https://github.com/AvdLee/SwiftUI-Agent-Skill",
-      "version": "2.4.2",
+      "version": "3.0.0",
       "author": {
         "name": "Antoine van der Lee",
         "email": "contact@avanderlee.com"

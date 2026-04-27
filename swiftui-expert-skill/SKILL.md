@@ -1,6 +1,6 @@
 ---
 name: swiftui-expert-skill
-description: Write, review, or improve SwiftUI code following best practices for state management, view composition, performance, macOS-specific APIs, and iOS 26+ Liquid Glass adoption. Use when building new SwiftUI features, refactoring existing views, reviewing code quality, or adopting modern SwiftUI patterns.
+description: Write, review, or improve SwiftUI code following best practices for state management, view composition, performance, macOS-specific APIs, and iOS 26+ Liquid Glass adoption. Use when building new SwiftUI features, refactoring existing views, reviewing code quality, or adopting modern SwiftUI patterns. Also triggers whenever an Xcode Instruments `.trace` file is referenced (to analyse it) or the user asks to **record** a new trace — attach to a running app, launch one fresh, or capture a manually-stopped session with the bundled `record_trace.py`. A target SwiftUI source file is optional; if provided it grounds recommendations in specific lines, but a trace alone is enough to diagnose hangs, hitches, CPU hotspots, and high-severity SwiftUI updates.
 ---
 
 # SwiftUI Expert Skill
@@ -38,6 +38,55 @@ description: Write, review, or improve SwiftUI code following best practices for
 - Use `Button` for all tappable elements; add accessibility grouping and labels
 - Gate version-specific APIs with `#available` and provide fallbacks
 
+### Record a new Instruments trace
+Trigger when the user asks to "record a trace", "profile the app", "capture a session", etc. Full reference: `references/trace-recording.md`.
+
+1. **Confirm target** — attach to a running app, launch an app, or record all processes? If the user didn't say, ask. List connected devices when useful:
+   ```bash
+   python3 "${SKILL_DIR}/scripts/record_trace.py" --list-devices
+   ```
+2. **Pick a template based on target kind** — the `SwiftUI` template populates the SwiftUI lane on any **real device**: a physical iOS/iPadOS device **or the host Mac**. The only exception is the **iOS Simulator**, where the SwiftUI lane comes back empty — switch to `--template "Time Profiler"` in that case (still gives Time Profiler + Hangs + Animation Hitches). Always check `--list-devices`: `simulators` kind → `Time Profiler`; `devices` kind (real devices and the host Mac) → default `SwiftUI`. Full decision table in `references/trace-recording.md`.
+3. **Start the recording**. For agent-driven sessions where the user says "I'll tell you when I'm done", start in the background and use a stop-file:
+   ```bash
+   python3 "${SKILL_DIR}/scripts/record_trace.py" \
+       --device "<name|udid>" --attach "<AppName>" \
+       --stop-file /tmp/stop-trace --output ~/Desktop/session.trace
+   ```
+   For interactive sessions, just tell the user to press Ctrl+C when done.
+4. **Signal stop** — when the user says they've finished exercising the app, `touch /tmp/stop-trace`. The script cleanly SIGINTs xctrace and waits up to 60s for finalisation.
+5. **Analyse** the resulting trace (flow into the "Trace-driven improvement" workflow below).
+
+### Trace-driven improvement (Instruments `.trace` provided)
+Trigger whenever the user's request references a `.trace` file. A target SwiftUI source file is **optional** — if given, cite specific lines; if not, recommend where to look based on view names and symbols the trace already reveals.
+
+Full reference: `references/trace-analysis.md`. Summary of the composition pattern:
+
+1. **Scope the analysis.** Ask yourself: does the user want the whole trace, or a slice?
+   - "focus on X / after X / between X and Y / during X" → **resolve to a window first** (see step 2).
+   - No scoping cue → analyse the whole trace.
+2. **Resolve a window (only if the user scoped).** The parser exposes two discovery modes:
+   ```bash
+   # Find a log that marks the start/end of the region of interest:
+   python3 "${SKILL_DIR}/scripts/analyze_trace.py" --trace <path> \
+       --list-logs --log-message-contains "loaded feed" --log-limit 5
+   # Or list os_signpost intervals (paired begin/end), filterable by name:
+   python3 "${SKILL_DIR}/scripts/analyze_trace.py" --trace <path> \
+       --list-signposts --signpost-name-contains "ImageDecode"
+   ```
+   Both modes accept `--window START_MS:END_MS` to scope discovery. Pick the `time_ms` (for logs) or `start_ms`/`end_ms` (for signposts) that match the user's description. Build a window like `--window 10400:11700`.
+3. **Run the main analysis** (with or without `--window`):
+   ```bash
+   python3 "${SKILL_DIR}/scripts/analyze_trace.py" --trace <path> \
+       --json-only --top 10 [--window START_MS:END_MS]
+   ```
+4. **Interpret with `references/trace-analysis.md`** — key diagnostics:
+   - `main_running_coverage_pct` inside each correlation (<25% = blocked; ≥75% = CPU-bound).
+   - `swiftui-causes.top_sources` reveals *why* updates keep happening — high-edge-count sources like `UserDefaultObserver.send()` or wide `EnvironmentWriter` entries are structural invalidation bugs. Fixing one often collapses many downstream hot views.
+5. **When a specific view shows as expensive, ask who's invalidating it.** Use `--fanin-for "<view name>"` to get the ranked list of source nodes driving the updates.
+6. **Optionally ground in source.** If the user pointed at a file, read it and match view names / user-code symbols against identifiers there. If not, recommend which files to open based on the view names SwiftUI reported.
+7. **Return a prioritised plan.** Cite evidence (coverage %, hot symbol, overlapping view, log timestamp, cause-graph edges) and route each recommendation to a Topic Router reference.
+8. Only edit code if the user asked for edits.
+
 ### Topic Router
 
 Consult the reference file for each topic relevant to the current task:
@@ -51,6 +100,7 @@ Consult the reference file for each topic relevant to the current task:
 | Layout | `references/layout-best-practices.md` |
 | Sheets and navigation | `references/sheet-navigation-patterns.md` |
 | ScrollView | `references/scroll-patterns.md` |
+| Focus management | `references/focus-patterns.md` |
 | Animations (basics) | `references/animation-basics.md` |
 | Animations (transitions) | `references/animation-transitions.md` |
 | Animations (advanced) | `references/animation-advanced.md` |
@@ -62,8 +112,11 @@ Consult the reference file for each topic relevant to the current task:
 | macOS scenes | `references/macos-scenes.md` |
 | macOS window styling | `references/macos-window-styling.md` |
 | macOS views | `references/macos-views.md` |
+| Text patterns | `references/text-patterns.md` |
 | Deprecated API lookup | `references/latest-apis.md` |
 | Testing and previews | `references/testing-previews.md` |
+| Instruments trace analysis | `references/trace-analysis.md` |
+| Instruments trace recording | `references/trace-recording.md` |
 
 ## Correctness Checklist
 
@@ -77,6 +130,8 @@ These are hard rules -- violations are always bugs:
 - [ ] `ForEach` uses stable identity (never `.indices` for dynamic content)
 - [ ] Constant number of views per `ForEach` element
 - [ ] `.animation(_:value:)` always includes the `value` parameter
+- [ ] `@FocusState` properties are `private`
+- [ ] No redundant `@FocusState` writes inside tap gesture handlers on `.focusable()` views
 - [ ] iOS 26+ APIs gated with `#available` and fallback provided
 - [ ] `import Charts` present in files using chart types
 - [ ] Previews use self-contained mock data; no dependency on live services or network
@@ -96,9 +151,13 @@ These are hard rules -- violations are always bugs:
 - `references/charts-accessibility.md` -- Charts VoiceOver, Audio Graph, fallback strategies
 - `references/sheet-navigation-patterns.md` -- Sheets, NavigationSplitView, Inspector
 - `references/scroll-patterns.md` -- ScrollViewReader, programmatic scrolling
+- `references/focus-patterns.md` -- Focus state, focusable views, focused values, default focus, common pitfalls
 - `references/image-optimization.md` -- AsyncImage, downsampling, caching
 - `references/liquid-glass.md` -- iOS 26+ Liquid Glass effects and fallback patterns
 - `references/macos-scenes.md` -- Settings, MenuBarExtra, WindowGroup, multi-window
 - `references/macos-window-styling.md` -- Toolbar styles, window sizing, Commands
 - `references/macos-views.md` -- HSplitView, Table, PasteButton, AppKit interop
 - `references/testing-previews.md` -- `#Preview` macro, `@Previewable`, mock data patterns, XCTest/XCUITest, snapshot testing, @Observable model testing
+- `references/text-patterns.md` -- Text initializer selection, verbatim vs localized
+- `references/trace-analysis.md` -- Parse Instruments `.trace` files via `scripts/analyze_trace.py`; interpret main-thread coverage, high-severity SwiftUI updates, hitch narratives, and map findings back to source files
+- `references/trace-recording.md` -- Record a new trace via `scripts/record_trace.py`: attach to a running app, launch one fresh, or capture a manually-stopped session; supports stop-file for agent-driven flows

@@ -136,6 +136,29 @@ The deprecated variant passes only the new value. The modern variants provide ei
 - **With initial trigger**: `.onChange(of: value, initial: true) { ... }`
 - **Deprecated**: `.onChange(of: value) { newValue in ... }` — single-parameter closure
 
+### Sensory Feedback
+
+**Prefer `sensoryFeedback(_:trigger:)` and related overloads instead of `UIImpactFeedbackGenerator`, `UISelectionFeedbackGenerator`, and `UINotificationFeedbackGenerator` in SwiftUI views.**
+
+Attach haptics declaratively to the view that owns the state change, rather than imperatively firing UIKit generators inside button actions.
+
+```swift
+@State private var isFavorite = false
+
+Button("Favorite", systemImage: isFavorite ? "heart.fill" : "heart") {
+    isFavorite.toggle()
+}
+.sensoryFeedback(.selection, trigger: isFavorite)
+```
+
+Use the conditional overload when feedback should fire only for specific transitions:
+
+```swift
+.sensoryFeedback(.selection, trigger: phase) { old, new in
+    old == .inactive || new == .expanded
+}
+```
+
 ### Gestures
 
 - **`MagnifyGesture`** instead of `MagnificationGesture` (access magnitude via `value.magnification`)
@@ -454,6 +477,7 @@ PhotoGrid(photos: photos)
 | `disableAutocorrection(_:)` | `autocorrectionDisabled(_:)` | iOS 16+ |
 | `UIPasteboard.general` | `PasteButton` | iOS 16+ |
 | `onChange(of:perform:)` | `onChange(of:) { }` or `onChange(of:) { old, new in }` | iOS 17+ |
+| `UIImpactFeedbackGenerator` / `UISelectionFeedbackGenerator` / `UINotificationFeedbackGenerator` | `sensoryFeedback(_:trigger:)` | iOS 17+ |
 | `MagnificationGesture` | `MagnifyGesture` | iOS 17+ |
 | `RotationGesture` | `RotateGesture` | iOS 17+ |
 | `coordinateSpace(name:)` | `coordinateSpace(.named(...))` | iOS 17+ |

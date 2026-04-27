@@ -63,3 +63,9 @@ fastlane/test_output
 
 # Node
 node_modules/
+
+# Python
+__pycache__/
+
+# Skills
+swiftui-expert-skill-workspace/
