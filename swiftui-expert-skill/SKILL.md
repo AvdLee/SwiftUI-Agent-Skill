@@ -114,6 +114,7 @@ Consult the reference file for each topic relevant to the current task:
 | macOS views | `references/macos-views.md` |
 | Text patterns | `references/text-patterns.md` |
 | Deprecated API lookup | `references/latest-apis.md` |
+| Testing and previews | `references/testing-previews.md` |
 | Instruments trace analysis | `references/trace-analysis.md` |
 | Instruments trace recording | `references/trace-recording.md` |
 
@@ -133,7 +134,7 @@ These are hard rules -- violations are always bugs:
 - [ ] No redundant `@FocusState` writes inside tap gesture handlers on `.focusable()` views
 - [ ] iOS 26+ APIs gated with `#available` and fallback provided
 - [ ] `import Charts` present in files using chart types
-
+- [ ] Previews use self-contained mock data; no dependency on live services or network
 ## References
 
 - `references/latest-apis.md` -- **Read first for every task.** Deprecated-to-modern API transitions (iOS 15+ through iOS 26+)
@@ -156,6 +157,7 @@ These are hard rules -- violations are always bugs:
 - `references/macos-scenes.md` -- Settings, MenuBarExtra, WindowGroup, multi-window
 - `references/macos-window-styling.md` -- Toolbar styles, window sizing, Commands
 - `references/macos-views.md` -- HSplitView, Table, PasteButton, AppKit interop
+- `references/testing-previews.md` -- `#Preview` macro, `@Previewable`, mock data patterns, XCTest/XCUITest, snapshot testing, @Observable model testing
 - `references/text-patterns.md` -- Text initializer selection, verbatim vs localized
 - `references/trace-analysis.md` -- Parse Instruments `.trace` files via `scripts/analyze_trace.py`; interpret main-thread coverage, high-severity SwiftUI updates, hitch narratives, and map findings back to source files
 - `references/trace-recording.md` -- Record a new trace via `scripts/record_trace.py`: attach to a running app, launch one fresh, or capture a manually-stopped session; supports stop-file for agent-driven flows
