@@ -49,10 +49,8 @@ To install this Skill for your personal use in Claude Code:
 /plugin install swiftui-expert@swiftui-expert-skill
 ```
 
-### Option C: Cursor plugin (coming soon)
-This repository is now packaged for Cursor plugin submission, but the marketplace listing is not live yet.
-
-Once approved, you'll be able to install it from the Cursor Marketplace.
+### Option C: Cursor plugin
+This repository is packaged as a Cursor plugin. See [Cursor plugins documentation](https://cursor.com/docs/plugins) for installation instructions.
 
 #### Project Configuration
 To automatically provide this Skill to everyone working in a repository, configure the repository's `.claude/settings.json`:
