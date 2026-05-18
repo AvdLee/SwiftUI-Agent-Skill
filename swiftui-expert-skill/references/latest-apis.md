@@ -32,7 +32,7 @@ These replacements have minimal API shape changes. Most are near-direct swaps; a
 
 ### Lists and Forms
 
-**Use `Section { } header: { } footer: { }` instead of the positional `Section(header:footer:content:)` initializers.**
+**Use trailing-closure `Section` initializers instead of the positional header/footer View initializers.**
 
 The single-title form is still current and should not be treated as deprecated:
 
@@ -53,6 +53,14 @@ Section {
 
 // Deprecated/renamed - positional header/footer View arguments
 Section(header: Text("Settings"), footer: Text("Changes apply immediately.")) {
+    Toggle("Notifications", isOn: .constant(true))
+}
+
+Section(header: Text("Settings")) {
+    Toggle("Notifications", isOn: .constant(true))
+}
+
+Section(footer: Text("Changes apply immediately.")) {
     Toggle("Notifications", isOn: .constant(true))
 }
 ```
@@ -498,6 +506,8 @@ PhotoGrid(photos: photos)
 | `accessibility(label:)` etc. | `accessibilityLabel()` etc. | iOS 15+ |
 | `TextField` `onCommit`/`onEditingChanged` | `onSubmit` + `focused` | iOS 15+ |
 | `animation(_:)` (no value) | `animation(_:value:)` | Back-deploys (iOS 13+) |
+| `Section(header:content:)` | `Section(content:header:)` | Future-deprecated |
+| `Section(footer:content:)` | `Section(content:footer:)` | Future-deprecated |
 | `Section(header:footer:content:)` | `Section(content:header:footer:)` | Future-deprecated |
 | Manual `EnvironmentKey` | `@Entry` macro | Back-deploys (Xcode 16+) |
 | `NavigationView` | `NavigationStack` / `NavigationSplitView` | iOS 16+ |
