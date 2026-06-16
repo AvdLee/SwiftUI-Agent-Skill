@@ -232,7 +232,21 @@ struct ItemRow: View {
 }
 ```
 
-**Avoid storing frequently-changing values in the environment.** Even when a view doesn't read the changed key, SwiftUI still checks all environment readers. This cost adds up with many views and frequent updates (geometry values, timers).
+**Avoid storing frequently-changing values in the environment.** Every write to *any* environment key forces every view that reads *any* key in that subtree to be checked. So a high-frequency value (scroll offset, window/container size, drag translation, per-frame animation progress, timer ticks, hover location) flowing into an `@Entry` or `.environment(\.key, value)` becomes an invalidation storm.
+
+Instead, hold the value in an `@Observable` model and expose a **coarsened** value — a boolean threshold rather than the raw measurement — so views invalidate only when crossing a meaningful boundary:
+
+```swift
+@MainActor @Observable
+final class ViewportModel {
+    var width: CGFloat = 0 { didSet { isWide = width > 600 } }
+    private(set) var isWide = false   // readers invalidate only when this flips
+}
+```
+
+The same shape applies per row in a list: storing the raw offset on a model and having every row read it still invalidates all visible rows every frame. Give each item its own `@Observable` whose properties track only that item's derived state (e.g. `isVisible`), so each row invalidates at most twice (enter/leave) regardless of scroll speed — see item #10 below.
+
+For purely visual effects driven by scroll position (opacity, scale, rotation), prefer `scrollTransition` or `visualEffect(in:)` — they push the per-frame work to the renderer and skip body re-evaluation entirely. Reach for the `@Observable` + coarsening pattern only when the scroll-derived value must drive non-rendering logic (model updates, prefetches, sibling state).
 
 > Source: "Optimize SwiftUI performance with Instruments" (WWDC25, session 306)
 

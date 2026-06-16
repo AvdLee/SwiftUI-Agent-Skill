@@ -2,6 +2,8 @@
 
 > Based on a comparison of Apple's documentation using the Sosumi MCP, we found the latest recommended APIs to use.
 
+> This file lists *what* the modern replacements are. For *how to behave* when you find a soft-deprecated API — when to migrate, when to leave it alone, and the scoping rule for unrelated edits — see `references/soft-deprecation.md`. To refresh this list after a new SDK release, run the maintenance skill at `.agents/skills/update-swiftui-apis/SKILL.md`.
+
 ## Table of Contents
 - [Always Use (iOS 15+)](#always-use-ios-15)
 - [When Targeting iOS 16+](#when-targeting-ios-16)

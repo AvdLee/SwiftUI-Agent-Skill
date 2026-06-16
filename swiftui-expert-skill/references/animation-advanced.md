@@ -367,6 +367,31 @@ struct Wedge: Shape {
 
 > Source: "What's new in SwiftUI" (WWDC25, session 256)
 
+### When to Implement `animatableData` Manually
+
+Reach for an explicit `animatableData` (instead of the macro) when the interpolated value needs custom logic that doesn't map 1:1 to a stored property — normalization, clamping, or driving a derived value. For a deployment target of iOS 26+, use `AnimatableValues`; for earlier targets, use `AnimatablePair`.
+
+```swift
+// iOS 26+: keep phase in 0..<2π and clamp amplitude during interpolation
+struct WaveShape: Shape {
+    var amplitude: CGFloat
+    var phase: CGFloat
+    var maxAmplitude: CGFloat
+
+    var animatableData: AnimatableValues<CGFloat, CGFloat> {
+        get { AnimatableValues(amplitude, phase) }
+        set {
+            amplitude = min(max(newValue.value.0, 0), maxAmplitude)
+            phase = newValue.value.1.truncatingRemainder(dividingBy: 2 * .pi)
+        }
+    }
+
+    func path(in rect: CGRect) -> Path { /* ... */ }
+}
+```
+
+On earlier deployment targets, the same logic uses `AnimatablePair` with `newValue.first` / `newValue.second`.
+
 ---
 
 ## Quick Reference

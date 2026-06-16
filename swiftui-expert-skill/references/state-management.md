@@ -5,6 +5,8 @@
 - [Property Wrapper Selection Guide](#property-wrapper-selection-guide)
 - [@State](#state)
 - [Property Wrappers Inside @Observable Classes](#property-wrappers-inside-observable-classes)
+- [Make @Observable Property Types Equatable](#make-observable-property-types-equatable)
+- [@Observable Dependency Granularity](#observable-dependency-granularity)
 - [@Binding](#binding)
 - [@FocusState](#focusstate)
 - [@StateObject vs @ObservedObject (Legacy - Pre-iOS 17)](#stateobject-vs-observedobject-legacy---pre-ios-17)
@@ -104,6 +106,44 @@ This applies to **any** property wrapper used inside an `@Observable` class, inc
 
 **Never remove `@ObservationIgnored`** from property-wrapper properties in `@Observable` classes — doing so causes a compiler error.
 
+## Make @Observable Property Types Equatable
+
+The `@Observable` macro generates a setter that **skips invalidation when the new value equals the current one** — but only when it can compare them, which means only when the property's type is `Equatable`. Without that conformance, every assignment notifies observing views, even when the value is identical. This is an easy win for properties written frequently with the same value (polling, streaming updates, timers).
+
+```swift
+// AVOID: not Equatable — every assignment invalidates, even no-op writes
+enum DeliveryStatus { case placed, preparing, shipped, delivered }
+
+// PREFER: Equatable lets the generated setter short-circuit redundant writes
+enum DeliveryStatus: Equatable { case placed, preparing, shipped, delivered }
+```
+
+This applies to collection properties too: an `Array`/`Set`/`Dictionary` is only `Equatable` when its element type is, so a non-`Equatable` element defeats the short-circuit for the whole collection. (The check is emitted into the generated setter as user code, so it applies on every OS that supports `@Observable` when built with current Xcode.)
+
+This is distinct from `Equatable` *views* (see `references/performance-patterns.md`): that conformance lets SwiftUI skip a view's body; this one lets the model skip notifying observers in the first place.
+
+## @Observable Dependency Granularity
+
+Observation tracks reads at the **property** level, not the field level — so reading any part of a compound property establishes a dependency on the whole thing. Three common traps and their fixes:
+
+- **A computed property establishes dependencies transitively.** `var currentUser: User? { users.first { $0.id == currentID } }` reads `users` in its body, so any view reading `currentUser` depends on the entire `users` array. Renaming the access doesn't change what observation tracks.
+- **A struct-typed stored property drags the whole struct.** A view reading `session.user.name` depends on `session.user`; editing any other field of `user` invalidates it.
+- **An array/collection read drags the whole collection.** Reading one element establishes a dependency on the entire stored collection.
+
+```swift
+// PREFER: cache derived values as stored properties, kept in sync in didSet
+@MainActor @Observable
+final class AppState {
+    var users: [User] = [] { didSet { recomputeCurrentUser() } }
+    var currentID: User.ID? { didSet { recomputeCurrentUser() } }
+
+    private(set) var currentUser: User?
+    private func recomputeCurrentUser() { currentUser = users.first { $0.id == currentID } }
+}
+```
+
+For struct-typed properties, expose the fields the views actually read as individual properties on the model (each is then tracked separately). When many rows each observe several fields of their element, model each element as its own `@Observable` and have the parent **persist** the instances — see the per-item view model pattern in `references/performance-patterns.md`. Reading several already-narrow properties from one model is fine and does not need splitting.
+
 ## @Binding
 
 Use only when child view needs to **modify** parent's state. If child only reads the value, use `let` instead.
@@ -133,6 +173,25 @@ struct ChildView: View {
 ### When NOT to use @Binding
 
 - **Don't use `@Binding` for read-only values.** If the child only displays the value and never modifies it, use `let` instead. `@Binding` adds unnecessary overhead and implies a write contract that doesn't exist.
+
+### Prefer KeyPath Bindings Over Closure Bindings
+
+When you need a binding into a model, prefer a KeyPath/subscript-based binding over a hand-written `Binding(get:set:)` closure. A closure binding allocates a new closure each time `body` runs and can't be compared, which can trigger unnecessary invalidations.
+
+```swift
+// BAD - closure binding: heap allocation each body pass, defeats comparison
+let binding = Binding(
+    get: { model[scoreFor: player] },
+    set: { model[scoreFor: player] = $0 }
+)
+PlayerScoreRow(player: player, score: binding)
+
+// GOOD - project through a subscript with @Bindable
+@Bindable var model = model
+PlayerScoreRow(player: player, score: $model[scoreFor: player])
+```
+
+If no suitable subscript exists, add one (a labeled subscript reads as a clean projection into the model). Reserve closure bindings for cases where no key path or subscript can express the transform.
 
 ## @FocusState
 
@@ -294,7 +353,49 @@ struct ThemedView: View {
 }
 ```
 
-The `@Entry` macro replaces the manual `EnvironmentKey` conformance pattern. It also works with `TransactionValues`, `ContainerValues`, and `FocusedValues`.
+The `@Entry` macro replaces the manual `EnvironmentKey` conformance pattern. It also works with `Transaction`, `ContainerValues`, and `FocusedValues`.
+
+#### Never store closures in custom environment keys
+
+SwiftUI can't reliably compare function values, so a view that reads an environment key holding a closure invalidates on every environment write, even when nothing it cares about changed. Wrapping the closure in a struct doesn't help — the struct still contains an uncomparable closure. The fix is to eliminate the closure: store the data it would have captured as properties and expose the behavior via `callAsFunction` or a method.
+
+```swift
+// AVOID: closure in a custom environment key
+extension EnvironmentValues {
+    @Entry var submit: (String) -> Void = { _ in }
+}
+
+// PREFER: a defunctionalized struct (or an @Observable model)
+struct SubmitAction { func callAsFunction(_ draft: String) { /* ... */ } }
+extension EnvironmentValues {
+    @Entry var submit = SubmitAction()
+}
+```
+
+This rule is for **custom** keys. Framework action types designed to wrap a closure — `\.openURL`, `\.dismiss`, `\.refresh`, and similar — are the intended API and are fine.
+
+#### Keep @Entry default values stable
+
+`@Entry` wraps its default expression in a computed getter, so the default is re-evaluated on every read that falls back to it. If the expression returns a different result each time — a fresh reference like `Model()`, or a runtime value like `Date()` / `UUID()` — readers that use the default invalidate on every unrelated environment write.
+
+```swift
+// AVOID: re-allocates Model() on every fallback read
+extension EnvironmentValues {
+    @Entry var model = Model()
+}
+
+// PREFER: back the default with a stable value
+extension EnvironmentValues {
+    @Entry var model = _defaultModel
+    private static let _defaultModel = Model()
+}
+```
+
+Stable defaults (literals, enum cases, `nil`, or a `static let`-backed instance) need no fix. If readers test the default for an "empty" sentinel, prefer an optional `@Entry var model: Model?` and branch on `if let` instead.
+
+#### Remove unused @Environment reads
+
+Declaring `@Environment(\.someKey)` subscribes the view to that key even if `body` never uses the value, so every write to that key re-evaluates the view for nothing. If the wrapped value isn't referenced anywhere the body reaches, delete the declaration. (The type form `@Environment(Model.self)` is different — observation tracks at the property level, so an unused type-form declaration carries no live invalidation cost.)
 
 ### @Environment with @Observable (iOS 17+ - Preferred)
 
@@ -386,3 +487,6 @@ SwiftUI can't track changes through nested `ObservableObject` properties. Workar
 6. **Never declare passed values as `@State` or `@StateObject`**
 7. With `@Observable`, nested objects work fine; with `ObservableObject`, pass nested objects directly to child views
 8. **Always add `@ObservationIgnored` to property wrappers** (e.g., `@AppStorage`, `@SceneStorage`, `@Query`) inside `@Observable` classes — they conflict with the macro's property transformation
+9. **Prefer `Equatable` types for frequently-written `@Observable` properties** so the generated setter skips redundant invalidations
+10. **Never store closures in custom environment keys; keep `@Entry` defaults stable** (no `Model()`/`Date()` expressions)
+11. **Prefer KeyPath/subscript bindings over closure bindings**
