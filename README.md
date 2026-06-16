@@ -17,6 +17,8 @@ This repository distills practical SwiftUI best practices into actionable, conci
 - [Swift Concurrency Expert](https://github.com/AvdLee/Swift-Concurrency-Agent-Skill)
 - [Core Data Expert](https://github.com/AvdLee/Core-Data-Agent-Skill)
 - [Swift Testing Expert](https://github.com/AvdLee/Swift-Testing-Agent-Skill)
+- [Xcode Build Optimization Agent Skill](https://github.com/AvdLee/Xcode-Build-Optimization-Agent-Skill)
+- [Xcode Simulator AI Control Agent Skill](https://www.rocketsim.app/docs/features/agentic-development/agent-skill/)
 
 ## How to Use This Skill
 
