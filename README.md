@@ -192,7 +192,21 @@ swiftui-expert-skill/
     trace-recording.md
     view-structure.md - View extraction and composition patterns
 ```
+
 <!-- END REFERENCE STRUCTURE -->
+
+## Evals and production telemetry
+
+The `evals/swiftui-expert/` directory contains a small human-review eval set for
+Liquid Glass review, list performance, and Instruments trace analysis. The cases
+are harness-neutral so SwiftUI Expert behavior can be checked before release in
+Claude Code, Codex, Cursor, or another agent workspace.
+
+If you publish this skill through Telvine, keep runtime telemetry metadata-only:
+`skill.invocation.start`, `skill.invocation.end`, and `skill.invocation.error`
+for skill behavior, plus `plugin.component.invoked` and
+`plugin.component.error` for non-skill components. Do not emit prompts, project
+files, trace contents, screenshots, app data, tool arguments, or model outputs.
 
 ## Maintenance
 
