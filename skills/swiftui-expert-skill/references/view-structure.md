@@ -85,13 +85,13 @@ struct ContentView: View {
     var titleView: some View {
         Text("Hello from Property")
             .font(.largeTitle)
-            .foregroundColor(.blue)
+            .foregroundStyle(.blue)
     }
 
     func messageView(text: String, color: Color) -> some View {
         Text(text)
             .font(.title)
-            .foregroundColor(color)
+            .foregroundStyle(color)
             .padding()
     }
 
