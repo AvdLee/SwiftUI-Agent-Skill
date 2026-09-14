@@ -344,56 +344,11 @@ TabView {
 
 ### Toolbars
 
-**Use `ToolbarSpacer` to control grouping of toolbar items.** Fixed spacers visually separate related groups; flexible spacers push items apart.
-
-```swift
-.toolbar {
-    ToolbarItem(placement: .topBarTrailing) {
-        Button("Up", systemImage: "chevron.up") { }
-    }
-    ToolbarItem(placement: .topBarTrailing) {
-        Button("Down", systemImage: "chevron.down") { }
-    }
-    ToolbarSpacer(.fixed)
-    ToolbarItem(placement: .topBarTrailing) {
-        Button("Settings", systemImage: "gear") { }
-    }
-}
-```
-
-**Use `sharedBackgroundVisibility(.hidden)` to remove the glass group background from an individual toolbar item.**
-
-```swift
-ToolbarItem(placement: .topBarTrailing) {
-    Image(systemName: "person.circle.fill")
-        .sharedBackgroundVisibility(.hidden)
-}
-```
-
-**Use `badge(_:)` on toolbar item content to display an indicator.**
-
-```swift
-ToolbarItem(placement: .topBarTrailing) {
-    Button("Notifications", systemImage: "bell") { }
-        .badge(unreadCount)
-}
-```
-
-> Source: "Build a SwiftUI app with the new design" (WWDC25, session 323)
+For `ToolbarSpacer`, shared-background visibility, badges, customization, transitions, overflow, and minimization, consult [`toolbar-patterns.md`](toolbar-patterns.md).
 
 ### Search
 
-**Use `searchToolbarBehavior(.minimizable)` to opt into a minimized search button.** The system may automatically minimize search into a toolbar button depending on available space. Use this modifier to explicitly opt in.
-
-```swift
-NavigationStack {
-    ContentView()
-        .searchable(text: $query)
-        .searchToolbarBehavior(.minimizable)
-}
-```
-
-> Source: "Build a SwiftUI app with the new design" (WWDC25, session 323)
+Use `searchToolbarBehavior(.minimize)` on iOS or visionOS 26+ to opt into a minimized search button. See [`toolbar-patterns.md`](toolbar-patterns.md) for platform availability.
 
 ### Animations
 
@@ -524,23 +479,34 @@ Migrate the older location/`isTargeted` `dropDestination` overload to `dropDesti
 
 ## When Targeting iOS 27+
 
-Consult [`sdk-27.md`](sdk-27.md) for the exact behavior and availability of:
+Use the focused topic references for detailed guidance:
 
-- `@State` macro source-compatibility changes
-- unified `@ContentBuilder` diagnostics
-- `reorderable()` and `reorderContainer(for:)`
-- default `AsyncImage` HTTP caching, `AsyncImage(request:)`, and `asyncImageURLSession(_:)`
-- `swipeActionsContainer()` outside `List`
-- item-binding overloads for `alert` and `confirmationDialog`
-- toolbar overflow, visibility priority, pinning, minimization, and dynamic content
+- [`state-management.md`](state-management.md)
+- [`view-structure.md`](view-structure.md)
+- [`list-patterns.md`](list-patterns.md)
+- [`image-optimization.md`](image-optimization.md)
+- [`sheet-navigation-patterns.md`](sheet-navigation-patterns.md)
+- [`toolbar-patterns.md`](toolbar-patterns.md)
 
-On iOS 27+, use `toolbarVisibility(_:for: .statusBar)` instead of `statusBarHidden(_:)`. `ToolbarPlacement.statusBar` is unavailable on other platforms; on visionOS, remove `statusBarHidden` because it has no effect.
+On iOS 27+, use `toolbarVisibility(_:for: .statusBar)` instead of `statusBarHidden(_:)`. `ToolbarPlacement.statusBar` is iOS-only; on visionOS, remove `statusBarHidden` because it has no effect. The newer `dropDestination(for:isEnabled:action:)` overload is also available on visionOS 26+ (as well as iOS/macOS 26+).
 
-Platform-specific soft deprecations in the 27 SDKs include:
+### Additional SDK 27 soft-deprecated families
 
-- watchOS: `CarouselTabViewStyle` → `VerticalTabViewStyle`; `listRowPlatterColor(_:)` → `listItemTint(_:)`
-- macOS: `MenuButton` and `MenuButtonStyle` families → `Menu` / `MenuStyle`; `ControlActiveState` / `controlActiveState` → `appearsActive` (the Boolean replacement no longer distinguishes `.key` from `.active`)
-- visionOS: `SurroundingsEffect.systemDark` → `.dark`
+Use `Menu` / `MenuStyle` instead of `MenuButton`, `MenuButtonStyle`, and the legacy menu-button styles (`PullDownMenuButtonStyle`, `BorderlessPullDownMenuButtonStyle`, `BorderlessButtonMenuButtonStyle`, `DefaultMenuButtonStyle`, `BorderedButtonMenuStyle`, and `BorderlessButtonMenuStyle`). Use `.menuStyle(.menu)` or `.menuStyle(.button)` with a button style instead of `PopUpButtonPickerStyle`.
+
+Other lookup entries from the SDK include:
+
+- `ContextMenu` and `contextMenu(_:)` → `contextMenu(menuItems:)`
+- `Section(header:...)/Section(footer:...)/Section(header:footer:...)` → trailing-closure `Section(content:header:footer:)` forms
+- `GroupBox(label:content:)` → `GroupBox(content:label:)`
+- `Picker(selection:label:content:)` → `Picker(selection:content:label:)`
+- `Color(_:)` platform and `CGColor` initializers → `Color(uiColor:)`, `Color(nsColor:)`, and `Color(cgColor:)`; `Color.cgColor` → `resolve(in:).cgColor`
+- `onLongPressGesture` overloads with `pressing:` → `onLongPressGesture(minimumDuration:maximumDuration:perform:onPressingChanged:)` or its shorter counterpart
+- `Font.system(_:design:)` and legacy `Font.system(size:weight:design:)` forms → `system(_:weight:design:)` and the current size/weight/design overloads
+- `Section.collapsible(_:)` → a standard `Section` initializer (collapsibility is no longer enabled by that modifier)
+- string-type paste/drop APIs (`PasteButton`, `onPasteCommand`, `onInsert`, and `DropInfo.hasItemsConforming`) → UTType-based APIs
+
+Platform-specific entries include `CarouselTabViewStyle` → `VerticalTabViewStyle` and `listRowPlatterColor(_:)` → `listItemTint(_:)` on watchOS, `ControlActiveState` → `appearsActive` on macOS, and `SurroundingsEffect.systemDark` → `.dark` on visionOS.
 
 Search this file's lookup table when migrating an API that the 27 SDK marks soft-deprecated. Do not introduce unrelated migrations during feature work; follow [`soft-deprecation.md`](soft-deprecation.md).
 
@@ -585,6 +551,7 @@ Search this file's lookup table when migrating an API that the 27 SDK marks soft
 | `CarouselTabViewStyle` (watchOS) | `VerticalTabViewStyle` | SDK 27 soft-deprecated |
 | `ControlActiveState` / `controlActiveState` (macOS) | `appearsActive` | SDK 27 soft-deprecated |
 | `AnimatableModifier` | Conform the modifier to `Animatable` directly | SDK 27 soft-deprecated |
+| `FileDocument`, `ReferenceFileDocument`, and legacy `DocumentGroup` initializers | `Document` (`ReadableDocument` / `WritableDocument`) and closure-based `DocumentGroup` | SDK 27 soft-deprecated; replacement requires aligned 27 releases |
 | `TabView(selection:content:)` legacy builder | `TabContentBuilder`-based `TabView` initializers | SDK 27 soft-deprecated |
 | `listRowPlatterColor(_:)` (watchOS) | `listItemTint(_:)` | SDK 27 soft-deprecated |
 | `toolbarBackground(_:for:)` visibility overload | `toolbarBackgroundVisibility(_:for:)` | iOS 18+ / macOS 15+ |

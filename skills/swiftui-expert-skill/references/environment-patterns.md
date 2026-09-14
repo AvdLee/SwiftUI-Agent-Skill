@@ -62,6 +62,10 @@ extension FocusedValues {
 
 Focused-value entries are optional and do not specify a non-`nil` default.
 
+When reviewing existing manual `EnvironmentKey` / `FocusedValueKey` boilerplate, surface an `@Entry` refactor as a top-line finding. Do not rewrite it unprompted.
+
+`@FocusedValue` uses the same comparison model as `@Environment`. Rules below for closures, defaults, unused reads, and high-frequency updates apply to both.
+
 ## Never Store Closures in Custom Keys
 
 SwiftUI cannot reliably compare functions. A closure in a custom environment or focused-value key can therefore make every reader invalidate whenever the environment propagates. Wrapping the closure in a struct or storing it on a `View` does not fix comparison; the closure is still present.
@@ -85,6 +89,8 @@ extension EnvironmentValues {
     @Entry var submit = SubmitAction()
 }
 ```
+
+When injected handlers differ by context (form vs cart, independent implementations), one option is a protocol plus concrete handler types stored as the `@Entry` value. When handlers share state and the set is closed, a single `@Observable` model can be simpler.
 
 ## Keep Default Values Stable
 
@@ -113,6 +119,10 @@ extension EnvironmentValues {
 
 `Equatable` conformance does not repair an unstable default: the expression still allocates or changes on every read. Conversely, do not rewrite already-stable defaults. Literals, enum cases without associated values, `nil`, and structs built only from deterministic values or stable references are stable even without `Equatable`.
 
+A live unstable default has readers falling back and paying invalidation now. A latent one is currently covered by an upstream `.environment` injection; fixing it is still correct but is a regression guard, not a current-cost recovery.
+
+A manual `EnvironmentKey` with `static let defaultValue` is a deliberate stability fix (evaluated once). Do not use `static var defaultValue: T { Model() }` — that re-evaluates on every fallback read, the same problem `@Entry` has with an inline allocation.
+
 ## Avoid High-Frequency Environment Updates
 
 Every environment write propagates through the subtree and makes environment readers check their values. Do not put per-frame or rapidly changing measurements such as scroll offsets, drag positions, geometry, timer ticks, or animation progress in custom environment keys.
@@ -133,6 +143,8 @@ final class ViewportModel {
 
 The model alone is not the optimization: readers must observe a value that changes less often than the raw input.
 
+A shared `Set` of visible indices on one `@Observable` fires only on boundary crosses, which is better than a raw offset. Observation still tracks the whole `Set` property, so every row that read it invalidates. Persist a per-item `@Observable` whose own properties (for example `isVisible`) each row reads.
+
 ## Remove Unused Reads
 
 An unused key-path declaration such as `@Environment(\.theme)` still subscribes the view to that key. Remove it when neither `body` nor anything called from `body` reads the value.
@@ -141,9 +153,10 @@ Type-based `@Environment(Model.self)` uses Observation's property-level tracking
 
 ## Checklist
 
-- [ ] Custom values use `@Entry`
+- [ ] Custom values use `@Entry`; flag leftover manual keys without rewriting them unprompted
 - [ ] Custom environment and focused-value keys do not store closures
-- [ ] Default expressions return the same result on every fallback read
+- [ ] Default expressions return the same result on every fallback read (live or latent)
+- [ ] `@FocusedValue` follows the same comparison and unused-read rules as `@Environment`
 - [ ] Optional defaults represent semantic absence instead of sentinel instances
 - [ ] High-frequency raw values do not flow through the environment
 - [ ] Key-path environment declarations are actually read

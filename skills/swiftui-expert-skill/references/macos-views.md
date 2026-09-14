@@ -90,7 +90,8 @@ Table(people) { /* columns */ }
 
 // Bordered with alternating row backgrounds
 Table(people) { /* columns */ }
-    .tableStyle(.bordered(alternatesRowBackgrounds: true))
+    .tableStyle(.bordered)
+    .alternatingRowBackgrounds()
 
 // Inset (no borders)
 Table(people) { /* columns */ }
@@ -100,6 +101,8 @@ Table(people) { /* columns */ }
 Table(people) { /* columns */ }
     .tableColumnHeaders(.hidden)
 ```
+
+Apply `.alternatingRowBackgrounds()` as a separate modifier instead of passing `alternatesRowBackgrounds:` to `.bordered` (soft-deprecated in SDK 27).
 
 ---
 

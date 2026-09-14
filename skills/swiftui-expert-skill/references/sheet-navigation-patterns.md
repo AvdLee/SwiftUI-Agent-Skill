@@ -3,6 +3,7 @@
 ## Table of Contents
 
 - [Sheet Patterns](#sheet-patterns)
+- [Item-Driven Alerts and Confirmation Dialogs (SDK 27)](#item-driven-alerts-and-confirmation-dialogs-sdk-27)
 - [Navigation Patterns](#navigation-patterns)
 - [Multi-Column Navigation with NavigationSplitView](#multi-column-navigation-with-navigationsplitview)
 - [Inspector](#inspector)
@@ -115,6 +116,30 @@ struct ArticlesView: View {
 ```
 
 **Why**: A single `@State` property and one `.sheet(item:)` modifier replaces N boolean properties and N sheet modifiers, improving readability and preventing only-one-sheet-at-a-time conflicts.
+
+## Item-Driven Alerts and Confirmation Dialogs (SDK 27)
+
+SDK 27 adds `alert(_:item:actions:message:)` and `confirmationDialog(_:item:titleVisibility:actions:message:)`. The optional binding alone drives presentation, the unwrapped value is passed to the action and message closures, and dismissal resets the binding to `nil`. The item does not need to conform to `Identifiable`.
+
+```swift
+@State private var photoToDelete: Photo?
+
+var body: some View {
+    PhotoList { photoToDelete = $0 }
+        .confirmationDialog(
+            "Delete photo?",
+            item: $photoToDelete
+        ) { photo in
+            Button("Delete \(photo.name)", role: .destructive) {
+                delete(photo)
+            }
+        } message: { photo in
+            Text("\(photo.name) will be removed.")
+        }
+}
+```
+
+Prefer the item overload for an action tied to an optional value instead of synchronizing a separate Boolean or pairing `isPresented` with `presenting:`. Do not use the older `Alert`-returning `alert(item:)`. These overloads require the SDK 27 toolchain but back-deploy to iOS 15, macOS 12, tvOS 15, watchOS 8, and visionOS 1; no runtime availability gate is needed at those deployment targets.
 
 ## Navigation Patterns
 
@@ -345,7 +370,7 @@ struct ContentView: View {
 }
 ```
 
-For `alert` and `confirmationDialog` API patterns, see `latest-apis.md`.
+For older `alert` and `confirmationDialog` API patterns, see `latest-apis.md`. Prefer the SDK 27 item overloads above when the presentation is tied to an optional value.
 
 ## Summary Checklist
 
@@ -357,7 +382,7 @@ For `alert` and `confirmationDialog` API patterns, see `latest-apis.md`.
 - [ ] Use `Inspector` for trailing-edge supplementary panels
 - [ ] Set column widths with `navigationSplitViewColumnWidth(min:ideal:max:)` or `inspectorColumnWidth(min:ideal:max:)`
 - [ ] Use appropriate presentation modifiers (sheet, fullScreenCover, popover)
-- [ ] Alerts and confirmation dialogs use modern API with actions
+- [ ] Alerts and confirmation dialogs use modern API with actions; prefer the SDK 27 `item:` overload for an optional value
 - [ ] Avoid passing dismiss/save callbacks to sheets
 - [ ] Use enum-based `Identifiable` type with `.sheet(item:)` when presenting multiple sheets
 - [ ] Navigation state can be saved/restored when needed

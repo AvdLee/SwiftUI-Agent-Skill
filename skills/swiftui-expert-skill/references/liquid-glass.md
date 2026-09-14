@@ -40,7 +40,7 @@ if #available(iOS 26, *) {
 The primary modifier for applying glass effects to views:
 
 ```swift
-.glassEffect(_ glass: Glass = .regular, in shape: some Shape = .rect, isEnabled: Bool = true)
+.glassEffect(_ glass: Glass = .regular, in shape: some Shape = DefaultGlassEffectShape())
 ```
 
 #### Basic Usage
@@ -48,7 +48,7 @@ The primary modifier for applying glass effects to views:
 ```swift
 Text("Hello")
     .padding()
-    .glassEffect()  // Default regular style, rect shape
+    .glassEffect()  // Default regular style, capsule shape
 ```
 
 #### With Shape
@@ -198,6 +198,23 @@ struct MorphingExample: View {
 2. Use the same `@Namespace`
 3. Wrap in `GlassEffectContainer`
 4. Apply animation to the container or parent
+
+### Unioning glass effects
+
+Use `glassEffectUnion(id:namespace:)` when related glass views should render as one union while remaining separate views in the hierarchy. The ID is optional; use the same ID and namespace for views that belong to the union.
+
+```swift
+@Namespace private var glassNamespace
+
+HStack {
+    ActionButton()
+        .glassEffectUnion(id: "actions", namespace: glassNamespace)
+    StatusView()
+        .glassEffectUnion(id: "actions", namespace: glassNamespace)
+}
+```
+
+`glassEffectUnion(id:namespace:)` is available on iOS 26+, macOS 26+, tvOS 26+, and watchOS 26+; it is unavailable on visionOS.
 
 ## Modifier Order
 
@@ -410,6 +427,7 @@ An automatic scroll edge effect blurs and fades content under system toolbars to
 - Apply glass before padding/frame modifiers
 - Nest `GlassEffectContainer` unnecessarily
 - Add custom darkening backgrounds behind toolbars (conflicts with scroll edge effect)
+- For toolbar grouping, customization, overflow, and minimization, see [toolbar-patterns.md](toolbar-patterns.md).
 
 ## Checklist
 

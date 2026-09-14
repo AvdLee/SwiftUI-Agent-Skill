@@ -7,6 +7,7 @@
 - [Struct or Method / Computed Property?](#struct-or-method--computed-property)
 - [Extract Subviews, Not Computed Properties](#extract-subviews-not-computed-properties)
 - [@ViewBuilder](#viewbuilder)
+- [SDK 27 `@ContentBuilder`](#sdk-27-contentbuilder)
 - [Keep View Body Simple and Avoid High-Cost Operations](#keep-view-body-simple-and-avoid-high-cost-operations)
 - [Keep View `init` Cheap](#keep-view-init-cheap)
 - [Single-Child Group](#single-child-group)
@@ -241,6 +242,21 @@ Prefer `@ViewBuilder` when:
 - there is conditional branching between multiple view types
 - extracting a separate `struct` would not provide meaningful separation
 
+## SDK 27 `@ContentBuilder`
+
+SDK 27 unifies many SwiftUI result builders under `@ContentBuilder`. Block contents are no longer constrained to `View`, so previously compiling source can become ambiguous. Choose the narrow fix matching the diagnostic. Do not broadly rewrite working builders or rename unrelated types.
+
+- For ambiguous `ShapeStyle.opacity` or `blendMode` passed directly to `overlay` or `background`, select the builder overload:
+  ```swift
+  Rectangle().overlay {
+      Color.blue.opacity(0.3).blendMode(.overlay)
+  }
+  ```
+- Fully qualify a shadowed SwiftUI type, such as `SwiftUI.Color.clear`.
+- Avoid spelling concrete `TupleView` or `TupleContent` generic structures; prefer opaque `some View`. If a concrete SDK 27 type is unavoidable, the builder now produces `TupleContent`. When the deployment target is below OS 27 and a concrete `TupleView` constraint is unavoidable, construct `TupleView((...))` explicitly inside the builder as a back-deployment fallback.
+- If an empty nested builder is ambiguous, provide `EmptyContent()` or `EmptyView()`. This can occur with MapKit in the dependency graph even when the file does not import MapKit, if member-import visibility is disabled. It also occurs with a conditional-compilation branch that becomes empty.
+- For deeply branching Charts content that times out only when back-deployed (typically around 10+ `if`/`else if` or `switch` branches), extract the branches into an `@ChartContentBuilder` helper.
+
 ## Keep View Body Simple and Avoid High-Cost Operations
 
 Refrain from performing complex operations within the `body` of your view. Instead of passing a ready-to-use sequence with filtering, mapping, or sorting directly into `ForEach`, prepare the sequence outside the body.
@@ -257,26 +273,18 @@ var body: some View {
 }
 ```
 
-Prefer:
+Prefer already-prepared values. `init` is not a one-time filter — it reruns whenever the parent re-evaluates, so treat it as a constant-time copy of inputs. Cache derived collections on the model (or in `@State` updated from `.onChange`) and pass the prepared sequence in:
 
 ```swift
 struct FilteredListView: View {
-    private let filteredValues: [Int]
-
-    init(values: [Int]) {
-        self.filteredValues = values.filter { $0 > 0 } // Perform filtering once
-    }
+    let filteredValues: [Int]
 
     var body: some View {
         List {
-            content
-        }
-    }
-
-    private var content: some View {
-        ForEach(filteredValues, id: \.self) { value in
-            Text(String(value))
-                .padding()
+            ForEach(filteredValues, id: \.self) { value in
+                Text(String(value))
+                    .padding()
+            }
         }
     }
 }
@@ -289,7 +297,7 @@ General guidance:
 - avoid filtering, sorting, and mapping inline in `body`
 - avoid constructing expensive formatters in `body`
 - avoid heavy branching in large view trees
-- move data preparation into the model layer or dedicated helpers
+- move data preparation into the model layer or dedicated helpers; do not filter in `init`
 
 ## Keep View `init` Cheap
 
@@ -768,8 +776,9 @@ Ways to fix it:
 - [ ] Extract complex views into separate subviews, not computed properties
 - [ ] Keep views small for readability and performance
 - [ ] Use `@ViewBuilder` only where it actually adds value
-- [ ] Avoid heavy filtering, mapping, sorting, or formatter creation inside `body`
-- [ ] Keep view `init` cheap (no decoding/formatting/allocation; it runs on every parent body pass)
+- [ ] Avoid heavy filtering, mapping, sorting, or formatter creation inside `body` or `init`
+- [ ] Keep view `init` cheap (constant-time input copy; it runs on every parent body pass)
+- [ ] Resolve SDK 27 `@ContentBuilder` ambiguity with the matching narrow fix
 - [ ] Avoid single-child `Group { OneView() }` (chain modifiers directly on the child)
 - [ ] Use lazy containers for large data sets
 - [ ] Container views use `@ViewBuilder let content: Content`

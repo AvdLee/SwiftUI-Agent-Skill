@@ -160,6 +160,7 @@ skills/swiftui-expert-skill/
     animation-transitions.md - View transitions, matchedGeometryEffect, and state changes
     charts-accessibility.md - Charts accessibility, fallback strategies, and WWDC sessions
     charts.md - Swift Charts marks, axes, selection, styling, composition, and Chart3D
+    document-apps.md - Document protocol, reading, writing, autosave, and FileDocument migration
     environment-patterns.md - @Entry, stable defaults, custom actions, and environment invalidation
     focus-patterns.md
     image-optimization.md - AsyncImage usage, downsampling, caching
@@ -175,20 +176,16 @@ skills/swiftui-expert-skill/
     performance-patterns.md - Hot-path optimizations and update control
     previews.md
     scroll-patterns.md - ScrollViewReader and programmatic scrolling
-    sdk-27-async-image.md - AsyncImage caching, URLRequest, and URLSession control
-    sdk-27-collection-interactions.md - Reordering and swipe actions outside List
-    sdk-27-content-builder.md - @ContentBuilder source-compatibility migrations
-    sdk-27-presentations.md - Item-driven alerts and confirmation dialogs
-    sdk-27-state.md - @State macro source-compatibility migrations
-    sdk-27-toolbar.md - Toolbar overflow, priority, pinning, and minimization
-    sdk-27.md - Router for SDK 27 APIs and source-compatibility migrations
     sheet-navigation-patterns.md - Sheets and type-safe navigation
     soft-deprecation.md
     state-management.md - Property wrapper selection and data flow
+    styled-text-editing.md - AttributedString editing, selection, formatting, and Markdown
     text-patterns.md
+    toolbar-patterns.md - Customization, overflow, visibility, transitions, and minimization
     trace-analysis.md
     trace-recording.md
     view-structure.md - View extraction and composition patterns
+    webkit-integration.md - WebView, WebPage, navigation, JavaScript, and exports
 ```
 <!-- END REFERENCE STRUCTURE -->
 

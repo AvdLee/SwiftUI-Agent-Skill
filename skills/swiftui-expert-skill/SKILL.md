@@ -1,6 +1,6 @@
 ---
 name: swiftui-expert-skill
-description: Use when writing, reviewing, or refactoring SwiftUI code for iOS or macOS, including state and `@Observable` data flow, view composition, performance, lists, environment, localization, animation, Liquid Glass, and API migration. Also use for SDK 27 `@State` initialization errors, `@ContentBuilder` ambiguity, `reorderable`, AsyncImage caching, swipe actions outside List, item-bound alerts, or toolbar overflow/minimization, and for Instruments `.trace` capture or analysis.
+description: Use when writing, reviewing, or refactoring SwiftUI code for iOS or macOS, including state and `@Observable` data flow, view composition, performance, lists, environment, localization, animation, Liquid Glass, and API migration. Also use for `@State` initialization or synthesized-property diagnostics, `@ContentBuilder` ambiguity, `reorderable` drag/drop, custom `AsyncImage` `URLSession`, swipe actions outside List, item-bound `alert`/`confirmationDialog`, `ToolbarOverflowMenu`, `AnimatableValues`, Document APIs (`Document`/`DocumentReader`), and Instruments `.trace` capture or analysis.
 ---
 
 # SwiftUI Expert Skill
@@ -9,6 +9,7 @@ description: Use when writing, reviewing, or refactoring SwiftUI code for iOS or
 
 - Treat each `View` type as an invalidation boundary: give it only the data it reads and keep frequently changing dependencies close to the smallest affected subtree
 - Search `references/latest-apis.md` when writing, reviewing, or migrating API usage; look up only the APIs relevant to the task
+- Replace hard-deprecated APIs with modern equivalents. During feature work, flag soft-deprecated APIs and leave them in place (see `references/soft-deprecation.md`)
 - Prefer native SwiftUI APIs over UIKit/AppKit bridging unless bridging is necessary
 - Focus on correctness and performance; do not enforce specific architectures (MVVM, VIPER, etc.)
 - Encourage separating business logic from views for testability without mandating how
@@ -21,14 +22,14 @@ description: Use when writing, reviewing, or refactoring SwiftUI code for iOS or
 
 ### Review existing SwiftUI code
 - Read the code under review and identify which topics apply
-- Flag deprecated APIs (compare against `references/latest-apis.md`)
+- Flag deprecated APIs (compare against `references/latest-apis.md`); replace hard-deprecated APIs, and flag soft-deprecated APIs without rewriting them unless the user asked to migrate
 - Run the Topic Router below for each relevant topic
 - Validate `#available` gating and fallback paths for version-specific features
 - For broad codebase reviews, first identify smaller focus areas and present them one at a time; if the user requests a whole-codebase review, divide it into a TODO list
 
 ### Improve existing SwiftUI code
 - Audit current implementation against the Topic Router topics
-- Replace deprecated APIs with modern equivalents from `references/latest-apis.md`
+- Replace hard-deprecated APIs with modern equivalents from `references/latest-apis.md`; flag soft-deprecated APIs and do not rewrite them during feature work
 - Refactor hot paths to reduce unnecessary state updates
 - Extract complex view bodies into separate subviews
 - Suggest image downsampling when `UIImage(data:)` is encountered (optional optimization, see `references/image-optimization.md`)
@@ -112,7 +113,10 @@ Consult the reference file for each topic relevant to the current task:
 | Swift Charts | `references/charts.md` |
 | Charts accessibility | `references/charts-accessibility.md` |
 | Image optimization | `references/image-optimization.md` |
-| SDK 27 APIs and migrations | `references/sdk-27.md` |
+| Toolbars | `references/toolbar-patterns.md` |
+| Document-based apps | `references/document-apps.md` |
+| WebKit | `references/webkit-integration.md` |
+| Styled text editing | `references/styled-text-editing.md` |
 | Liquid Glass (iOS 26+) | `references/liquid-glass.md` |
 | macOS scenes | `references/macos-scenes.md` |
 | macOS window styling | `references/macos-window-styling.md` |

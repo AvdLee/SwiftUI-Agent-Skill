@@ -4,6 +4,7 @@
 
 - [Property Wrapper Selection Guide](#property-wrapper-selection-guide)
 - [@State](#state)
+- [SDK 27 `@State` Macro](#sdk-27-state-macro)
 - [Property Wrappers Inside @Observable Classes](#property-wrappers-inside-observable-classes)
 - [Make @Observable Property Types Equatable](#make-observable-property-types-equatable)
 - [@Observable Dependency Granularity](#observable-dependency-granularity)
@@ -74,6 +75,31 @@ struct MyView: View {
 
 **Note**: You may want to mark `@Observable` classes with `@MainActor` to ensure thread safety with SwiftUI, unless your project or package uses Default Actor Isolation set to `MainActor`—in which case, the explicit attribute is redundant and can be omitted.
 
+## SDK 27 `@State` Macro
+
+SDK 27 migrates `@State` from a property wrapper to a macro. When an initializer intentionally seeds view-owned state, drop the declaration's initial value and assign it once in `init`:
+
+```swift
+struct CounterView: View {
+    let name: String
+    @State private var count: Int
+
+    init(name: String, count: Int) {
+        self.name = name
+        self.count = count
+    }
+}
+```
+
+Do not fix “used before being initialized” by reordering assignments. Assigning in `init` to state that already has a declaration default remains incorrect: SwiftUI preserves the declaration's state storage, and later parent arguments do not replace child-owned state.
+
+Other source-compatibility failures:
+
+- “Invalid redeclaration of synthesized property”: another property wrapper composed with `@State` is colliding with macro-generated storage. Remove the redundant wrapper or restructure the composition.
+- Missing private memberwise initializer: SDK 27 may not synthesize it for a view containing `@State`. Define the initializer explicitly instead of delegating to the missing memberwise initializer.
+
+Keep `@State` private. Use an initializer seed only for intentional one-time ownership; use a plain value or `@Binding` when later parent updates must propagate.
+
 ## Property Wrappers Inside @Observable Classes
 
 **Critical**: The `@Observable` macro transforms stored properties to add observation tracking. Property wrappers (like `@AppStorage`, `@SceneStorage`, `@Query`) also transform properties with their own storage. These two transformations conflict, causing a compiler error.
@@ -128,6 +154,7 @@ Observation tracks reads at the **property** level, not the field level — so r
 - **A computed property establishes dependencies transitively.** `var currentUser: User? { users.first { $0.id == currentID } }` reads `users` in its body, so any view reading `currentUser` depends on the entire `users` array. Renaming the access doesn't change what observation tracks.
 - **A struct-typed stored property drags the whole struct.** A view reading `session.user.name` depends on `session.user`; editing any other field of `user` invalidates it.
 - **An array/collection read drags the whole collection.** Reading one element establishes a dependency on the entire stored collection.
+- **A row that receives the parent model plus an index subscribes too broadly.** The list that owns the `ForEach` legitimately depends on the collection. A row that looks up `state.users[index]` also depends on the entire collection, so editing one element invalidates every row. Pass the element (or the fields the row reads) directly.
 
 ```swift
 // PREFER: cache derived values as stored properties, kept in sync in didSet
@@ -141,7 +168,7 @@ final class AppState {
 }
 ```
 
-For struct-typed properties, expose the fields the views actually read as individual properties on the model (each is then tracked separately). When many rows each observe several fields of their element, model each element as its own `@Observable` and have the parent **persist** the instances — see the per-item view model pattern in `references/performance-patterns.md`. Reading several already-narrow properties from one model is fine and does not need splitting.
+For struct-typed properties, expose the fields the views actually read as individual properties on the model (each is then tracked separately). If the struct must remain round-trippable (re-encoded to a payload), keep both: a stored `var user: User` for the original shape and the flattened properties for view consumption, kept in sync in `didSet` on `user`. When many rows each observe several fields of their element, model each element as its own `@Observable` and have the parent **persist** the instances — see the per-item view model pattern in `references/performance-patterns.md`. Reading several already-narrow properties from one model is fine and does not need splitting.
 
 ## @Binding
 
@@ -207,6 +234,24 @@ PlayerScoreRow(player: player, score: $model[scoreFor: player])
 
 If no suitable subscript exists, add one (a labeled subscript reads as a clean projection into the model). Reserve closure bindings for cases where no key path or subscript can express the transform.
 
+For an argumentless projection, use a computed property. A marker-enum subscript (`$model[playback: .isPlaying]`) is ceremony around a property that takes no arguments:
+
+```swift
+// AVOID: marker enum dresses up an argumentless projection
+fileprivate subscript(playback _: PlaybackProjection) -> Bool {
+    get { rate > 0 }
+    set { rate = newValue ? 1 : 0 }
+}
+Toggle("Play", isOn: $model[playback: .isPlaying])
+
+// PREFER: computed property
+var isPlaying: Bool {
+    get { rate > 0 }
+    set { rate = newValue ? 1 : 0 }
+}
+Toggle("Play", isOn: $model.isPlaying)
+```
+
 ## @FocusState
 
 See `references/focus-patterns.md` for comprehensive focus management guidance including `@FocusState`, `@FocusedValue`, `.focusable()`, default focus, and common pitfalls.
@@ -263,7 +308,7 @@ struct ChildView: View {
 }
 ```
 
-Mark `@State` and `@StateObject` as `private` so they do not appear in a generated initializer. A custom initializer may intentionally seed private, view-owned state once; make that ownership explicit and do not expect later argument changes to replace the state. See `references/sdk-27.md` for SDK 27 initialization diagnostics.
+Mark `@State` and `@StateObject` as `private` so they do not appear in a generated initializer. A custom initializer may intentionally seed private, view-owned state once; make that ownership explicit and do not expect later argument changes to replace the state. See [SDK 27 `@State` Macro](#sdk-27-state-macro) for initialization diagnostics.
 
 ## @Bindable (iOS 17+)
 
@@ -434,5 +479,6 @@ SwiftUI can't track changes through nested `ObservableObject` properties. Workar
 10. Pass value-type views only the fields they read
 11. Isolate side-effect-only dependencies when they would invalidate an expensive parent
 12. Follow `references/environment-patterns.md` for custom environment and focused values
-13. **Prefer KeyPath/subscript bindings over closure bindings**
+13. **Prefer KeyPath/subscript bindings over closure bindings**; use a computed property, not a marker-enum subscript, for argumentless projections
 14. **Declare a binding you react to as `@Binding`, not a plain `Binding`-typed property** — a plain property isn't tracked, so external changes won't re-evaluate the view (often a Release-only failure)
+15. Do not pass a parent `@Observable` plus an index into a row; pass the element or the fields the row reads

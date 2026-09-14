@@ -361,7 +361,8 @@ struct Wedge: Shape {
 ```
 
 ### When to Use
-- **Prefer `@Animatable`** for any custom `Shape`, `AnimatableModifier`, or type conforming to `Animatable` with multiple properties
+- **Prefer `@Animatable`** for any custom `Shape` or type conforming to `Animatable` with multiple properties
+- **Conform `ViewModifier` types to `Animatable` directly** — not `AnimatableModifier` (soft-deprecated in SDK 27)
 - **Use `@AnimatableIgnored`** for properties that control behavior but should not interpolate (e.g., directions, flags, identifiers)
 - The macro works with any type conforming to `Animatable`, not just `Shape`
 
