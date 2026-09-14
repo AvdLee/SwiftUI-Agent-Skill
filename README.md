@@ -148,6 +148,8 @@ Record a new trace: attach to MyApp on my iPhone — I'll tell you when I'm done
 
 Full guidance: [`skills/swiftui-expert-skill/references/trace-analysis.md`](skills/swiftui-expert-skill/references/trace-analysis.md) and [`skills/swiftui-expert-skill/references/trace-recording.md`](skills/swiftui-expert-skill/references/trace-recording.md).
 
+Looking for a visual way to explore Instruments traces? [RocketTrace](https://rockettrace.app/?utm_source=github&utm_medium=referral&utm_campaign=swiftui-agent-skill&utm_content=readme-trace-section) is a companion app created by this repository's author for inspecting and understanding trace data.
+
 ## Skill Structure
 <!-- BEGIN REFERENCE STRUCTURE -->
 ```text
