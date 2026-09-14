@@ -254,13 +254,15 @@ Document-based apps with automatic file management. On macOS, provides:
 - **Multiple document windows** simultaneously
 - On iOS, shows a document browser instead
 
+> **SDK 27+:** on iOS 27 / macOS 27 / visionOS 27 and later, prefer the `Document` protocol (`ReadableDocument` / `WritableDocument`) with the closure-based `DocumentGroup` initializer — see `references/document-apps.md`. The rest of this section covers `FileDocument` and `ReferenceFileDocument`, which are soft-deprecated in the SDK 27 toolchain but remain the compatible option for older deployment targets.
+
 ```swift
 DocumentGroup(newDocument: TextFile()) { config in
     ContentView(document: config.$document)
 }
 ```
 
-The document type must conform to `FileDocument` (value type) or `ReferenceFileDocument` (reference type). Key requirements:
+For deployment targets below the 27 releases, the document type must conform to `FileDocument` (value type) or `ReferenceFileDocument` (reference type). Key requirements:
 
 ```swift
 struct TextFile: FileDocument {

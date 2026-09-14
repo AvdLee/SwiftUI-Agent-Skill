@@ -4,6 +4,7 @@
 
 - [Relative Layout Over Constants](#relative-layout-over-constants)
 - [Context-Agnostic Views](#context-agnostic-views)
+- [Adaptive and Resizable Interfaces](#adaptive-and-resizable-interfaces)
 - [Own Your Container](#own-your-container)
 - [Layout Performance](#layout-performance)
 - [View Logic and Testability](#view-logic-and-testability)
@@ -71,6 +72,26 @@ struct ProfileCard: View {
 ```
 
 **Why**: Views should work as full screens, modals, sheets, popovers, or embedded content.
+
+## Adaptive and Resizable Interfaces
+
+Size views from the **proposed size**, not from a fixed screen or orientation. Prefer `@Environment(\.horizontalSizeClass)` / `verticalSizeClass`, `ViewThatFits`, and `AnyLayout` when choosing a layout variant. Avoid `UIScreen.main`, `UIScreen.main.bounds`, and portrait/landscape assumptions — those do not track the space actually offered to the view (split view, Stage Manager, windows, sheets).
+
+```swift
+struct AdaptiveStack<Content: View>: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        let layout = horizontalSizeClass == .compact
+            ? AnyLayout(VStackLayout())
+            : AnyLayout(HStackLayout())
+        layout { content }
+    }
+}
+```
+
+Use `ViewThatFits` when a compact alternative should replace a layout that overflows the proposal. Do not branch layout on device orientation or a cached screen size.
 
 ## Own Your Container
 
@@ -256,6 +277,7 @@ Button("Publish Project") {
 
 - [ ] Use relative layout over hard-coded constants
 - [ ] Views work in any context (don't assume screen size)
+- [ ] Adapt with proposed size, size classes, `ViewThatFits`, or `AnyLayout` — not `UIScreen.main` or orientation
 - [ ] Custom views own static containers
 - [ ] Avoid deep view hierarchies (layout thrash)
 - [ ] Gate frequent geometry updates by thresholds

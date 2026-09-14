@@ -4,6 +4,8 @@
 
 - [ForEach Identity and Stability](#foreach-identity-and-stability)
 - [Enumerated Sequences](#enumerated-sequences)
+- [Reorderable Collections (SDK 27)](#reorderable-collections-sdk-27)
+- [Swipe Actions Outside List (SDK 27)](#swipe-actions-outside-list-sdk-27)
 - [List with Custom Styling](#list-with-custom-styling)
 - [List with Pull-to-Refresh](#list-with-pull-to-refresh)
 - [Empty States with ContentUnavailableView (iOS 17+)](#empty-states-with-contentunavailableview-ios-17)
@@ -14,6 +16,8 @@
 ## ForEach Identity and Stability
 
 **Always provide stable identity for `ForEach`.** Never use `.indices` for dynamic content.
+
+The same identity rules apply to any data-driven initializer that behaves like `ForEach`: collection-driven `List` (including selection-aware overloads), `Table`, `OutlineGroup`, `Picker` collections, and `DisclosureGroup` content. Ids must be stable, unique, independent of position or mutable content, and cheap to hash.
 
 ```swift
 // Good - stable identity via Identifiable
@@ -81,6 +85,8 @@ var body: some View {
 }
 ```
 
+Cheap transformations — a small slice, `prefix(n)`, reading an already-prepared array — are fine inline. The rule targets work whose cost scales with the collection or that allocates new elements.
+
 **Avoid `AnyView` in list rows:**
 
 ```swift
@@ -111,13 +117,15 @@ struct ItemRow: View {
 }
 ```
 
+Replacing `AnyView` with a `@ViewBuilder` helper that still branches at the top level is only half the fix; wrap the branching content in a single-root container so the row stays unary.
+
 **Why**: Stable identity is critical for performance and animations. Unstable identity causes excessive diffing, broken animations, and potential crashes.
 
 ### Prefer unary rows in `List`
 
 `List` needs the identity of every row up front. When each row's body produces a **single top-level view** (a "unary" row), SwiftUI can template the row id from the `ForEach` element's id alone, without running each row's `body`. When the body branches between different top-level shapes — a bare top-level `switch`, a top-level `if` without `else`, or an `AnyView` — structural identity varies per row, so SwiftUI falls back to evaluating every row's body just to compute ids. That cost scales with the number of rows.
 
-The fix is to wrap branching content in any single-root container (`VStack`, `HStack`, `ZStack`, or a custom wrapper) so the row is always exactly one top-level view, as shown above. A top-level `if` without an `else` is also "multi" (0 or 1 views); if some elements shouldn't be rows at all, filter the collection before it reaches the `ForEach` rather than producing a zero-view row.
+The fix is to wrap branching content in any single-root container (`VStack`, `HStack`, `ZStack`, or a custom wrapper) so the row is always exactly one top-level view, as shown above. `Group` is a passthrough rather than a layout container, so it does not make multiple children unary. A top-level `if` without an `else` is also "multi" (0 or 1 views); if some elements shouldn't be rows at all, filter the collection before it reaches the `ForEach` rather than producing a zero-view row.
 
 To find non-constant row builders in an existing app, launch with `-LogForEachSlowPath YES`; SwiftUI logs each `ForEach` inside a lazy container whose row body produces a non-constant number of views.
 
@@ -127,7 +135,7 @@ Three more identity rules that prevent subtle bugs:
 
 - **The id must outlive the view and not change on edit.** Don't derive `id` from a mutable property (e.g. `var id: String { title }`). Editing the title changes the id, so SwiftUI treats it as a removal plus insertion — focus and per-row state are lost mid-edit. Use a stable `let id: UUID` or a server-assigned key.
 - **Don't synthesize a fresh id inside `body`.** `ForEach(items.map { Item(title: $0) })` creates new `UUID`s on every body pass, so the whole collection reads as replaced every update. Create ids once in storage that outlives `body` (the model layer), not inline.
-- **Keep the id cheap to hash.** Avoid `id: \.self` on a large `Hashable` struct; hashing walks every field on every diff. Use a small primitive (`UUID`, `Int`, short `String`, `URL`) and still pass the full element to the row.
+- **Keep the id cheap to hash.** Avoid `id: \.self` on a large `Hashable` struct; hashing walks every field on every diff. Use a small primitive (`UUID`, `Int`, short `String`, `URL`) and still pass the full element to the row. The fix is the id, not removing an unrelated `Hashable` conformance that may be used for selection, sets, or navigation.
 
 ### Identifiable ID Must Be Truly Unique
 
@@ -151,6 +159,8 @@ struct Article: Identifiable {
 
 **Classes get a default `ObjectIdentifier`-based `id`** when conforming to `Identifiable` without providing one. This is only unique for the object's lifetime and can be recycled after deallocation.
 
+Do not conform a type to `Identifiable` just to satisfy `ForEach` when it has no meaningful identity. Pass an explicit `id:` key path for the property that acts as identity in that context.
+
 ## Enumerated Sequences
 
 **Using `.enumerated()` is fine; the index just must not be the identity.** Using `\.offset` as the id is the same anti-pattern as `\.self` on `items.indices` — the id becomes the position, not the element, so inserts and reorders reset row state and break animations. Keep the element's own identity as the id and treat the index as ordinary row data.
@@ -168,6 +178,64 @@ ForEach(items.enumerated(), id: \.element.id) { index, item in
 ```
 
 **No `Array(...)` wrapper is needed on Swift 6.1+.** As of Swift 6.1, the sequence returned by `.enumerated()` conditionally conforms to `RandomAccessCollection` when the base collection does, so `ForEach` accepts it directly. On earlier toolchains, wrap it in `Array(...)`. Favor the direct form in new code — it avoids an eager copy on every body evaluation.
+
+## Reorderable Collections (SDK 27)
+
+`reorderable()` on `ForEach` plus `reorderContainer(for:)` on the enclosing container bring drag reordering to lists, stacks, grids, and custom layouts:
+
+```swift
+LazyVGrid(columns: columns) {
+    ForEach(items) { item in
+        ItemView(item)
+    }
+    .reorderable()
+}
+.reorderContainer(for: Item.self) { difference in
+    apply(difference, to: &items) // drop moved items in source order, then insert
+}
+```
+
+Availability: iOS, macOS, watchOS, and visionOS 27; unavailable on tvOS. Gate when the deployment target is older.
+
+`Item` must be `Identifiable` for the `for:` overload (it keys on `\.id`). If the type is not `Identifiable`, or you want a different identifier, use the `itemID:` key-path overload: `reorderContainer(for: Item.self, itemID: \.code)` paired with the same `.reorderable()`.
+
+`ReorderDifference` provides `sources` and a destination of `.before(id)` or `.end`. Apply it by dropping the moved items in a single pass that **preserves their source order**, then insert that captured sequence at the destination. Reconstructing from a `Set` loses order. For a single-collection container, `CollectionID` is `ReorderableSingleCollectionIdentifier`. For multiple sections, add `collectionID:` to each reorderable collection and use `reorderContainer(for:in:)`; route by `destination.collectionID`.
+
+### Drag and drop
+
+`.reorderContainer(for:)` already acts as a drag container and a drop destination. A standalone `.draggable` does not customize the reorder container; provide `dragContainer(for:)` instead. Return an empty collection from the `dragContainer` closure to disable drag for that item.
+
+Drag/drop customization availability differs from reordering:
+
+| API | iOS | macOS | watchOS | tvOS | visionOS |
+|---|---|---|---|---|---|
+| `reorderable()` / `reorderContainer(for:…)` | 27 | 27 | 27 | n/a | 27 |
+| `dragContainer` / `draggable(containerItemID:)` | 27 | 26 | n/a | n/a | 27 |
+| `DropSession` / `dropDestination(for:…session…)` | 26 | 26 | n/a | n/a | 26 |
+| `DropSession.reorderDestination(for:)` | 27 | 27 | n/a | n/a | 27 |
+
+watchOS can reorder locally but has no system drag/drop integration.
+
+**Combine by dropping one item onto another.** Put `.dropDestination(for:isEnabled:)` on each child. The closure signature is `(items: [T], session: DropSession) -> Void`. Put the per-item predicate in `isEnabled:`, not inside the closure. Do not use the `dropDestination(for:) { } isTargeted: { }` overload here — that reports hover for custom visuals and does not gate combining.
+
+**Accept drops at the reorder position.** Put `.dropDestination(for:)` on the container and ask `session.reorderDestination(for:)`. A `nil` destination means the drop did not hover a specific item; append.
+
+## Swipe Actions Outside List (SDK 27)
+
+Rows in a scrollable stack or grid can use existing `swipeActions` when the enclosing scroll container has `swipeActionsContainer()`. Without that modifier, row swipe actions outside `List` have no effect. `edge` defaults to `.trailing` and `allowsFullSwipe` defaults to `true`. The `swipeActions(..., onPresentationChanged:)` overload reports whether actions are revealed.
+
+```swift
+ScrollView {
+    LazyVStack {
+        ForEach(items) { item in
+            ItemRow(item: item).swipeActions { /* buttons */ }
+        }
+    }
+}
+.swipeActionsContainer()
+```
+
+Availability: `swipeActionsContainer()` and `onPresentationChanged` are iOS, macOS, watchOS, and visionOS 27; unavailable on tvOS. The original row `swipeActions(edge:allowsFullSwipe:content:)` has been available since iOS 15 / macOS 12 / watchOS 8 / visionOS 1 and does not need gating inside `List`.
 
 ## List with Custom Styling
 
@@ -452,7 +520,9 @@ Table(people) { /* columns */ }
 
 ## Summary Checklist
 
-- [ ] ForEach uses stable identity (never `.indices` or `\.offset` for dynamic content)
+- [ ] ForEach uses stable identity (never `.indices` or `\.offset` for dynamic content); the same id rules apply to selection-aware `List`, `Picker`, and disclosure collections
+- [ ] SDK 27 reordering uses `reorderable()` + `reorderContainer`; apply `ReorderDifference` in source order
+- [ ] Swipe actions outside `List` sit inside `swipeActionsContainer()`
 - [ ] Identifiable IDs are truly unique across all items
 - [ ] id is stable across edits (not derived from a mutable property), created outside `body`, and cheap to hash
 - [ ] Constant number of views per ForEach element; rows are unary (single top-level view)

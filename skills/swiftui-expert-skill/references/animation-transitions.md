@@ -264,8 +264,10 @@ struct BadShakeModifier: ViewModifier {
 
 ### Multiple Properties with AnimatablePair
 
+For deployment targets below iOS 26, use `AnimatablePair` to combine multiple animated properties. For iOS 26+ targets, prefer `@Animatable` or `AnimatableValues` — see [@Animatable Macro (iOS 26+)](animation-advanced.md#animatable-macro-ios-26) in `animation-advanced.md`.
+
 ```swift
-// GOOD - AnimatablePair for two properties
+// GOOD (below iOS 26) - AnimatablePair for two properties
 struct ComplexModifier: ViewModifier, Animatable {
     var scale: CGFloat
     var rotation: Double
@@ -285,7 +287,7 @@ struct ComplexModifier: ViewModifier, Animatable {
     }
 }
 
-// GOOD - nested AnimatablePair for 3+ properties
+// GOOD (below iOS 26) - nested AnimatablePair for 3+ properties
 struct ThreePropertyModifier: ViewModifier, Animatable {
     var x: CGFloat
     var y: CGFloat
@@ -316,7 +318,7 @@ struct ThreePropertyModifier: ViewModifier, Animatable {
 - Place transitions outside conditional structures
 - Use `withAnimation` or `.animation` outside the `if`
 - Implement `animatableData` explicitly for custom Animatable
-- Use `AnimatablePair` for multiple animated properties
+- Use `AnimatablePair` for multiple animated properties on deployment targets below iOS 26; for iOS 26+, use `@Animatable` or `AnimatableValues` (see `animation-advanced.md`)
 - Use asymmetric transitions when insert/remove need different effects
 
 ### Don't

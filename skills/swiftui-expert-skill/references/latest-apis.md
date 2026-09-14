@@ -10,6 +10,7 @@
 - [When Targeting iOS 17+](#when-targeting-ios-17)
 - [When Targeting iOS 18+](#when-targeting-ios-18)
 - [When Targeting iOS 26+](#when-targeting-ios-26)
+- [When Targeting iOS 27+](#when-targeting-ios-27)
 
 ---
 
@@ -23,14 +24,16 @@ These replacements have minimal API shape changes. Most are near-direct swaps; a
 
 - **`navigationTitle(_:)`** instead of `navigationBarTitle(_:)`
 - **`toolbar { ToolbarItem(...) }`** instead of `navigationBarItems(...)` (structural change)
-- **`toolbarVisibility(.hidden, for: .navigationBar)`** instead of `navigationBarHidden(_:)`
-- **`statusBarHidden(_:)`** instead of `statusBar(hidden:)`
 - **`ignoresSafeArea(_:edges:)`** instead of `edgesIgnoringSafeArea(_:)`
 - **`preferredColorScheme(_:)`** instead of `colorScheme(_:)`
 - **`foregroundStyle(_:)`** instead of `foregroundColor(_:)` (e.g., `.foregroundStyle(.primary)`)
 - **`clipShape(.rect(cornerRadius:))`** instead of `cornerRadius()`
 - **`textInputAutocapitalization(_:)`** instead of `autocapitalization(_:)` (note: `.never` replaces `.none`)
 - **`animation(_:value:)`** instead of `animation(_:)` (adds required `value:` parameter; back-deploys to iOS 13+)
+- **`dismiss` or `isPresented` environment values** instead of `PresentationMode` / `presentationMode`
+- **`DynamicTypeSize` / `dynamicTypeSize`** instead of `ContentSizeCategory` / `sizeCategory`
+- **Closure-based `NavigationLink` destinations** instead of eager `destination:` values
+- **Direct `Animatable` conformance** instead of `AnimatableModifier` (use `@Animatable` only when its newer availability fits)
 
 ### Lists and Forms
 
@@ -144,6 +147,11 @@ NavigationStack {
 - **`tint(_:)`** instead of `accentColor(_:)`
 - **`autocorrectionDisabled(_:)`** instead of `disableAutocorrection(_:)`
 
+### Scroll Indicators and Search Suggestions
+
+- Replace `ScrollView(..., showsIndicators:)` with `ScrollView(...)` plus `scrollIndicators(_:axes:)`.
+- Replace `searchable` overloads with an inline suggestions builder by composing `searchable(...)` with `searchSuggestions { ... }`.
+
 ### Clipboard
 
 **Prefer `PasteButton` for user-initiated paste UI** to avoid paste prompts. It handles permissions automatically. Use `UIPasteboard` only when you need programmatic or non-`Transferable` clipboard access (triggers the paste permission prompt).
@@ -218,9 +226,25 @@ Image("hero")
   ```
 - **`.coordinateSpace(.named("scroll"))`** instead of `.coordinateSpace(name: "scroll")`.
 
+Prefer overloads accepting `CoordinateSpaceProtocol` for `SpatialTapGesture`, location-aware `onTapGesture`, `onContinuousHover`, and `GeometryProxy.frame(in:)`.
+
+Resolve a color in the current environment before accessing Core Graphics:
+
+```swift
+let cgColor = color.resolve(in: environment).cgColor
+```
+
 ---
 
 ## When Targeting iOS 18+
+
+### Toolbar Visibility
+
+Use `toolbarVisibility(_:for:)` instead of `navigationBarHidden(_:)` or the older `toolbar(_:for:)` visibility overload. For deployment targets below iOS 18, retain the older modifier in the fallback branch.
+
+Use `toolbarBackgroundVisibility(_:for:)` instead of the `toolbarBackground(_:for:)` overload whose first argument is `Visibility`.
+
+On iOS, prefer `.topBarLeading` / `.topBarTrailing` over `.navigationBarLeading` / `.navigationBarTrailing`.
 
 ### Tabs
 
@@ -235,6 +259,12 @@ TabView {
 ```
 
 When using `Tab(role:)`, all tabs must use the `Tab` syntax. Mixing `Tab(role:)` with `.tabItem()` causes compilation errors.
+
+On iOS 18.4+ / macOS 15.4+, use the typed customization accessors:
+
+- `customization[section: id].tabOrder`
+- `customization[tab: id].sidebarVisibility`
+- `customization[section: id].resetTabOrder()`
 
 ### Previews
 
@@ -314,56 +344,11 @@ TabView {
 
 ### Toolbars
 
-**Use `ToolbarSpacer` to control grouping of toolbar items.** Fixed spacers visually separate related groups; flexible spacers push items apart.
-
-```swift
-.toolbar {
-    ToolbarItem(placement: .topBarTrailing) {
-        Button("Up", systemImage: "chevron.up") { }
-    }
-    ToolbarItem(placement: .topBarTrailing) {
-        Button("Down", systemImage: "chevron.down") { }
-    }
-    ToolbarSpacer(.fixed)
-    ToolbarItem(placement: .topBarTrailing) {
-        Button("Settings", systemImage: "gear") { }
-    }
-}
-```
-
-**Use `sharedBackgroundVisibility(.hidden)` to remove the glass group background from an individual toolbar item.**
-
-```swift
-ToolbarItem(placement: .topBarTrailing) {
-    Image(systemName: "person.circle.fill")
-        .sharedBackgroundVisibility(.hidden)
-}
-```
-
-**Use `badge(_:)` on toolbar item content to display an indicator.**
-
-```swift
-ToolbarItem(placement: .topBarTrailing) {
-    Button("Notifications", systemImage: "bell") { }
-        .badge(unreadCount)
-}
-```
-
-> Source: "Build a SwiftUI app with the new design" (WWDC25, session 323)
+For `ToolbarSpacer`, shared-background visibility, badges, customization, transitions, overflow, and minimization, consult [`toolbar-patterns.md`](toolbar-patterns.md).
 
 ### Search
 
-**Use `searchToolbarBehavior(.minimizable)` to opt into a minimized search button.** The system may automatically minimize search into a toolbar button depending on available space. Use this modifier to explicitly opt in.
-
-```swift
-NavigationStack {
-    ContentView()
-        .searchable(text: $query)
-        .searchToolbarBehavior(.minimizable)
-}
-```
-
-> Source: "Build a SwiftUI app with the new design" (WWDC25, session 323)
+Use `searchToolbarBehavior(.minimize)` on iOS or visionOS 26+ to opt into a minimized search button. See [`toolbar-patterns.md`](toolbar-patterns.md) for platform availability.
 
 ### Animations
 
@@ -480,6 +465,8 @@ PhotoGrid(photos: photos)
     }
 ```
 
+Migrate the older location/`isTargeted` `dropDestination` overload to `dropDestination(for:isEnabled:action:)` when targeting iOS, macOS, or visionOS 26+. Its action receives a `DropSession` and returns `Void`, so this is a behavioral migration rather than a label-only rename.
+
 > Source: "What's new in SwiftUI" (WWDC25, session 256)
 
 ### Scene Bridging
@@ -490,14 +477,49 @@ PhotoGrid(photos: photos)
 
 ---
 
+## When Targeting iOS 27+
+
+Use the focused topic references for detailed guidance:
+
+- [`state-management.md`](state-management.md)
+- [`view-structure.md`](view-structure.md)
+- [`list-patterns.md`](list-patterns.md)
+- [`image-optimization.md`](image-optimization.md)
+- [`sheet-navigation-patterns.md`](sheet-navigation-patterns.md)
+- [`toolbar-patterns.md`](toolbar-patterns.md)
+
+On iOS 27+, use `toolbarVisibility(_:for: .statusBar)` instead of `statusBarHidden(_:)`. `ToolbarPlacement.statusBar` is iOS-only; on visionOS, remove `statusBarHidden` because it has no effect. The newer `dropDestination(for:isEnabled:action:)` overload is also available on visionOS 26+ (as well as iOS/macOS 26+).
+
+### Additional SDK 27 soft-deprecated families
+
+Use `Menu` / `MenuStyle` instead of `MenuButton`, `MenuButtonStyle`, and the legacy menu-button styles (`PullDownMenuButtonStyle`, `BorderlessPullDownMenuButtonStyle`, `BorderlessButtonMenuButtonStyle`, `DefaultMenuButtonStyle`, `BorderedButtonMenuStyle`, and `BorderlessButtonMenuStyle`). Use `.menuStyle(.menu)` or `.menuStyle(.button)` with a button style instead of `PopUpButtonPickerStyle`.
+
+Other lookup entries from the SDK include:
+
+- `ContextMenu` and `contextMenu(_:)` → `contextMenu(menuItems:)`
+- `Section(header:...)/Section(footer:...)/Section(header:footer:...)` → trailing-closure `Section(content:header:footer:)` forms
+- `GroupBox(label:content:)` → `GroupBox(content:label:)`
+- `Picker(selection:label:content:)` → `Picker(selection:content:label:)`
+- `Color(_:)` platform and `CGColor` initializers → `Color(uiColor:)`, `Color(nsColor:)`, and `Color(cgColor:)`; `Color.cgColor` → `resolve(in:).cgColor`
+- `onLongPressGesture` overloads with `pressing:` → `onLongPressGesture(minimumDuration:maximumDuration:perform:onPressingChanged:)` or its shorter counterpart
+- `Font.system(_:design:)` and legacy `Font.system(size:weight:design:)` forms → `system(_:weight:design:)` and the current size/weight/design overloads
+- `Section.collapsible(_:)` → a standard `Section` initializer (collapsibility is no longer enabled by that modifier)
+- string-type paste/drop APIs (`PasteButton`, `onPasteCommand`, `onInsert`, and `DropInfo.hasItemsConforming`) → UTType-based APIs
+
+Platform-specific entries include `CarouselTabViewStyle` → `VerticalTabViewStyle` and `listRowPlatterColor(_:)` → `listItemTint(_:)` on watchOS, `ControlActiveState` → `appearsActive` on macOS, and `SurroundingsEffect.systemDark` → `.dark` on visionOS.
+
+Search this file's lookup table when migrating an API that the 27 SDK marks soft-deprecated. Do not introduce unrelated migrations during feature work; follow [`soft-deprecation.md`](soft-deprecation.md).
+
+---
+
 ## Quick Lookup Table
 
 | Deprecated | Recommended | Since |
 |-----------|-------------|-------|
 | `navigationBarTitle(_:)` | `navigationTitle(_:)` | iOS 15+ |
 | `navigationBarItems(...)` | `toolbar { ToolbarItem(...) }` | iOS 15+ |
-| `navigationBarHidden(_:)` | `toolbarVisibility(.hidden, for: .navigationBar)` | iOS 15+ |
-| `statusBar(hidden:)` | `statusBarHidden(_:)` | iOS 15+ |
+| `navigationBarHidden(_:)` | `toolbarVisibility(.hidden, for: .navigationBar)` | iOS 18+; retain old API in earlier fallback |
+| `statusBar(hidden:)` / `statusBarHidden(_:)` | `toolbarVisibility(_:for: .statusBar)` | iOS 27+; retain old API in earlier fallback |
 | `edgesIgnoringSafeArea(_:)` | `ignoresSafeArea(_:edges:)` | iOS 15+ |
 | `colorScheme(_:)` | `preferredColorScheme(_:)` | iOS 15+ |
 | `foregroundColor(_:)` | `foregroundStyle(_:)` | iOS 15+ |
@@ -523,6 +545,24 @@ PhotoGrid(photos: photos)
 | `coordinateSpace(name:)` | `coordinateSpace(.named(...))` | iOS 17+ |
 | `ObservableObject` | `@Observable` | iOS 17+ |
 | `tabItem(_:)` | `Tab` API | iOS 18+ |
-| Manual `animatableData` | `@Animatable` macro | iOS 26+ |
+| Manual 1:1 `animatableData` synthesis | `@Animatable` macro; keep manual logic for clamping/normalization | iOS 26+ |
 | `presentationBackground(_:)` on sheets | Default Liquid Glass sheet material | iOS 26+ |
 | Custom toolbar background hacks | `scrollEdgeEffectStyle(_:for:)` | iOS 26+ |
+| `CarouselTabViewStyle` (watchOS) | `VerticalTabViewStyle` | SDK 27 soft-deprecated |
+| `ControlActiveState` / `controlActiveState` (macOS) | `appearsActive` | SDK 27 soft-deprecated |
+| `AnimatableModifier` | Conform the modifier to `Animatable` directly | SDK 27 soft-deprecated |
+| `FileDocument`, `ReferenceFileDocument`, and legacy `DocumentGroup` initializers | `Document` (`ReadableDocument` / `WritableDocument`) and closure-based `DocumentGroup` | SDK 27 soft-deprecated; replacement requires aligned 27 releases |
+| `TabView(selection:content:)` legacy builder | `TabContentBuilder`-based `TabView` initializers | SDK 27 soft-deprecated |
+| `listRowPlatterColor(_:)` (watchOS) | `listItemTint(_:)` | SDK 27 soft-deprecated |
+| `toolbarBackground(_:for:)` visibility overload | `toolbarBackgroundVisibility(_:for:)` | iOS 18+ / macOS 15+ |
+| `toolbar(_:for:)` visibility overload | `toolbarVisibility(_:for:)` | iOS 18+ / macOS 15+ |
+| `searchable(..., suggestions:)` builder overloads | `searchable(...)` plus `searchSuggestions { ... }` | iOS 16+ / macOS 13+ |
+| `ScrollView(..., showsIndicators:)` | `ScrollView(...)` plus `scrollIndicators(_:axes:)` | iOS 16+ / macOS 13+ |
+| Eager `NavigationLink(destination:)` initializers | Closure destination or value-based navigation | SDK 27 soft-deprecated |
+| String type identifiers in paste/drop APIs | `UTType`-based overloads | SDK 27 soft-deprecated |
+| Coordinate-space overloads taking `CoordinateSpace` | `CoordinateSpaceProtocol` overloads | iOS 17+ / macOS 14+ |
+| Style initializers with `tint:` | Apply `View.tint(_:)` | SDK 27 soft-deprecated |
+| Inset/bordered list or table styles with `alternatesRowBackgrounds:` | Base style plus `alternatingRowBackgrounds()` | SDK 27 soft-deprecated |
+| `ToolbarItem(..., showsByDefault:)` | `defaultCustomization(_:options:)` with `.hidden` | SDK 27 soft-deprecated |
+| `TabViewCustomization` legacy section/sidebar subscripts | Typed `section`/`tab` subscript properties | iOS 18.4+ / macOS 15.4+ |
+| Location/`isTargeted` `dropDestination` overload | `dropDestination(for:isEnabled:action:)` with `DropSession` | iOS/macOS/visionOS 26+ |

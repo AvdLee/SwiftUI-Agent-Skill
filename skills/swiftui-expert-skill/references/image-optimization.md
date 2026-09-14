@@ -3,6 +3,7 @@
 ## Table of Contents
 
 - [AsyncImage Best Practices](#asyncimage-best-practices)
+- [SDK 27 Caching and Request Control](#sdk-27-caching-and-request-control)
 - [Image Decoding and Downsampling (Optional Optimization)](#image-decoding-and-downsampling-optional-optimization)
 - [UIImage Loading and Memory](#uiimage-loading-and-memory)
 - [SF Symbols](#sf-symbols)
@@ -33,6 +34,44 @@ AsyncImage(url: imageURL) { phase in
 ```
 
 For custom placeholders, replace `ProgressView()` in the `.empty` case with your placeholder view. Add `.transition(.opacity)` to the success case and `.animation(.easeInOut, value: imageURL)` to the container for fade-in transitions.
+
+## SDK 27 Caching and Request Control
+
+On aligned 27 runtimes, `AsyncImage(url:)` uses standard HTTP caching according to response headers, with no code change. The runtime behavior also benefits apps built with an older SDK. Do not add custom caching merely to obtain that default. If images still reload, first check the server's cache headers.
+
+SDK 27 adds three `AsyncImage(request:)` initializer shapes (remaining labels match the `URL` initializers):
+
+- Bare `AsyncImage(request:)` — renders the loaded image directly, like `AsyncImage(url:)`
+- `content:` / `placeholder:` pair
+- `transaction:` plus a `content:` closure that receives `AsyncImagePhase`
+
+The request carries a per-image `URLRequest`, including `cachePolicy` (`.returnCacheDataElseLoad`, `.returnCacheDataDontLoad`, `.reloadIgnoringLocalCacheData`, `.reloadRevalidatingCacheData`, `.useProtocolCachePolicy`). `asyncImageURLSession(_:)` supplies a configured `URLSession` and `URLCache` to a subtree.
+
+```swift
+struct GalleryView: View {
+    private static let imageSession: URLSession = {
+        let configuration = URLSessionConfiguration.default
+        configuration.urlCache = URLCache(
+            memoryCapacity: 64 * 1024 * 1024,
+            diskCapacity: 256 * 1024 * 1024
+        )
+        return URLSession(configuration: configuration)
+    }()
+
+    var body: some View {
+        AsyncImage(
+            request: URLRequest(url: imageURL, cachePolicy: .returnCacheDataElseLoad)
+        ) { image in
+            image.resizable().scaledToFit()
+        } placeholder: {
+            ProgressView()
+        }
+        .asyncImageURLSession(Self.imageSession)
+    }
+}
+```
+
+The request initializers and `asyncImageURLSession(_:)` require the aligned OS 27 releases (iOS, macOS, watchOS, tvOS, visionOS 27). Gate them for older deployment targets and retain `AsyncImage(url:)` as the fallback.
 
 ## Image Decoding and Downsampling (Optional Optimization)
 
@@ -194,6 +233,7 @@ Variants are available via naming convention: `star.circle.fill`, `star.square.f
 
 - [ ] Use `AsyncImage` with proper phase handling
 - [ ] Handle empty, success, and failure states
+- [ ] On OS 27, rely on default HTTP caching unless a custom cache policy or `URLSession` is needed
 - [ ] Consider downsampling for `UIImage(data:)` in performance-sensitive scenarios
 - [ ] Decode and downsample images off the main thread
 - [ ] Use appropriate target sizes for downsampling
