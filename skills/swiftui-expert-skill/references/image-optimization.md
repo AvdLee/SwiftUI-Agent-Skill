@@ -10,6 +10,8 @@
 
 ## AsyncImage Best Practices
 
+For SDK 27 default HTTP caching, `AsyncImage(request:)`, and custom `URLSession` support, consult `references/sdk-27-async-image.md`.
+
 ### Basic AsyncImage with Phase Handling
 
 ```swift

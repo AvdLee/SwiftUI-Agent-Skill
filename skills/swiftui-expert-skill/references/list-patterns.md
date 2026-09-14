@@ -15,6 +15,8 @@
 
 **Always provide stable identity for `ForEach`.** Never use `.indices` for dynamic content.
 
+The same identity rules apply to collection-driven `List`, `Table`, and `OutlineGroup` initializers: ids must be stable, unique, independent of position or mutable content, and cheap to hash.
+
 ```swift
 // Good - stable identity via Identifiable
 extension User: Identifiable {
@@ -117,7 +119,7 @@ struct ItemRow: View {
 
 `List` needs the identity of every row up front. When each row's body produces a **single top-level view** (a "unary" row), SwiftUI can template the row id from the `ForEach` element's id alone, without running each row's `body`. When the body branches between different top-level shapes — a bare top-level `switch`, a top-level `if` without `else`, or an `AnyView` — structural identity varies per row, so SwiftUI falls back to evaluating every row's body just to compute ids. That cost scales with the number of rows.
 
-The fix is to wrap branching content in any single-root container (`VStack`, `HStack`, `ZStack`, or a custom wrapper) so the row is always exactly one top-level view, as shown above. A top-level `if` without an `else` is also "multi" (0 or 1 views); if some elements shouldn't be rows at all, filter the collection before it reaches the `ForEach` rather than producing a zero-view row.
+The fix is to wrap branching content in any single-root container (`VStack`, `HStack`, `ZStack`, or a custom wrapper) so the row is always exactly one top-level view, as shown above. `Group` is a passthrough rather than a layout container, so it does not make multiple children unary. A top-level `if` without an `else` is also "multi" (0 or 1 views); if some elements shouldn't be rows at all, filter the collection before it reaches the `ForEach` rather than producing a zero-view row.
 
 To find non-constant row builders in an existing app, launch with `-LogForEachSlowPath YES`; SwiftUI logs each `ForEach` inside a lazy container whose row body produces a non-constant number of views.
 

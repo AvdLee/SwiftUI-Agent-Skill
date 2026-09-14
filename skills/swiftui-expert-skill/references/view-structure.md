@@ -5,7 +5,6 @@
 - [View Structure Principles](#view-structure-principles)
 - [View File Structure (optional readability suggestion)](#view-file-structure-optional-readability-suggestion)
 - [Struct or Method / Computed Property?](#struct-or-method--computed-property)
-- [Prefer Modifiers Over Conditional Views](#prefer-modifiers-over-conditional-views)
 - [Extract Subviews, Not Computed Properties](#extract-subviews-not-computed-properties)
 - [@ViewBuilder](#viewbuilder)
 - [Keep View Body Simple and Avoid High-Cost Operations](#keep-view-body-simple-and-avoid-high-cost-operations)
@@ -104,73 +103,7 @@ struct ContentView: View {
 }
 ```
 
-## Prefer Modifiers Over Conditional Views
-
-**Prefer "no-effect" modifiers over conditionally including views.** When you introduce a branch, consider whether you're representing multiple views or two states of the same view.
-
-### Use Opacity Instead of Conditional Inclusion
-
-```swift
-// Good - same view, different states
-SomeView()
-    .opacity(isVisible ? 1 : 0)
-
-// Avoid - creates/destroys view identity
-if isVisible {
-    SomeView()
-}
-```
-
-**Why**: Conditional view inclusion can cause loss of state, poor animation performance, and breaks view identity. Using modifiers maintains view identity across state changes.
-
-### When Conditionals Are Appropriate
-
-Use conditionals when you truly have **different views**, not different states:
-
-```swift
-// Correct - fundamentally different views
-if isLoggedIn {
-    DashboardView()
-} else {
-    LoginView()
-}
-
-// Correct - optional content
-if let user {
-    UserProfileView(user: user)
-}
-```
-
-### Conditional View Modifier Extensions Break Identity
-
-A common pattern is an `if`-based `View` extension for conditional modifiers. This changes the view's return type between branches, which destroys view identity and breaks animations:
-
-```swift
-// Problematic -- different return types per branch
-extension View {
-    @ViewBuilder func `if`<T: View>(_ condition: Bool, transform: (Self) -> T) -> some View {
-        if condition {
-            transform(self)  // Returns T
-        } else {
-            self              // Returns Self
-        }
-    }
-}
-```
-
-Prefer applying the modifier directly with a ternary or always-present modifier:
-
-```swift
-// Good -- same view identity maintained
-Text("Hello")
-    .opacity(isHighlighted ? 1 : 0.5)
-
-// Good -- modifier always present, value changes
-Text("Hello")
-    .foregroundStyle(isError ? .red : .primary)
-```
-
-When writing new code, never reach for a `.if` modifier. When reviewing existing code that already uses one, point out the identity/animation risk and show the ternary alternative, but don't silently refactor it as part of an unrelated change — swapping it can alter behavior (state resets, transition timing) and belongs in its own focused edit.
+For conditional modifier composition and `AnyShapeStyle`, consult `references/modifier-patterns.md`.
 
 ## Extract Subviews, Not Computed Properties
 
@@ -832,8 +765,6 @@ Ways to fix it:
 
 ## Summary Checklist
 
-- [ ] Prefer modifiers over conditional views for state changes
-- [ ] Avoid `if`-based conditional modifier extensions (they break view identity)
 - [ ] Extract complex views into separate subviews, not computed properties
 - [ ] Keep views small for readability and performance
 - [ ] Use `@ViewBuilder` only where it actually adds value
