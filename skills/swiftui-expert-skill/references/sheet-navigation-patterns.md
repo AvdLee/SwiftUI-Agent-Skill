@@ -267,8 +267,10 @@ struct ContentView: View {
 | **macOS** | Columns always visible side-by-side; sidebar has translucent material; variable-width column resizing by dragging |
 | **iPadOS (regular)** | Sidebar can overlay or push detail; supports column visibility toggle via toolbar button |
 | **iOS / iPadOS (compact)** | Collapses into a single `NavigationStack`; sidebar items show disclosure chevrons; back button navigates between columns |
-| **iPhone (all sizes)** | Always collapsed into a stack; sidebar appears as the root list; selections push detail onto the stack |
+| **iOS / iPadOS (regular)** | Can show columns tiled or as overlays, depending on available size and context |
 | **watchOS / tvOS** | Collapses into a single stack |
+
+Do not infer split-view behavior from the device family. Respond to the space SwiftUI offers: an iPhone can provide a regular-width context, including the inner display of iPhone Duo, where `NavigationSplitView` can show multiple columns. The same scene can later become compact and collapse, so keep selection and navigation state consistent through the transition.
 
 ## Inspector
 
@@ -329,7 +331,7 @@ MyEditorView()
 | **macOS** | Trailing-edge sidebar panel; resizable by dragging edge; integrates with window toolbar |
 | **iPadOS (regular)** | Trailing column alongside content; toggleable via toolbar button |
 | **iOS / iPadOS (compact)** | Adapts to a sheet presentation; swipe-to-dismiss supported |
-| **iPhone (all sizes)** | Always presented as a sheet (no trailing column); dismiss via swipe or button |
+| **iOS / iPadOS (regular)** | Can appear as a trailing column when the presentation context provides enough space |
 
 > **Tip:** Use `InspectorCommands` in your app's `.commands` to include the default inspector toggle keyboard shortcut.
 

@@ -80,6 +80,50 @@ Attach `matchedTransitionSource(id:in:)` to toolbar content that presents anothe
 
 The view `matchedTransitionSource(id:in:)` is available on iOS 18+, macOS 15+, tvOS 18+, watchOS 11+, and visionOS 2+. Its toolbar-content form is available on iOS 26+ and is unavailable on macOS, tvOS, watchOS, and visionOS. The zoom navigation transition is available on iOS 18+, macOS 15+, tvOS 18+, watchOS 11+, and visionOS 2+.
 
+## Adaptive vertical bars (iOS 27.1+)
+
+Build with the iOS 27.1 SDK and attach `.toolbar` content to a system `NavigationStack`, `NavigationSplitView`, or `TabView`. Those containers can move eligible controls between horizontal and vertical bars as available space and context change; a hand-built bar does not gain this behavior.
+
+Describe every action with both a title and icon, even when the visible representation is symbol-only. The system needs the title for accessibility, expanded representations, and overflow:
+
+```swift
+NavigationStack {
+    ContentView()
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Close", systemImage: "xmark") { close() }
+            }
+            ToolbarItem(placement: .topBarPinnedTrailing) {
+                Button("Share", systemImage: "square.and.arrow.up") { share() }
+            }
+        }
+}
+```
+
+Keep semantic placements so ordering remains meaningful on either axis: navigation and cancellation actions lead, prominent actions use `.topBarPinnedTrailing`, and bottom-bar actions remain grouped as bottom actions. Do not position items by reading a physical edge.
+
+SwiftUI infers axis eligibility from the item. Symbol-capable items can move vertically, while title-only and complex custom views generally remain horizontal. Override that inference only when needed:
+
+```swift
+ToolbarItem {
+    SelectOrDoneButton()
+}
+.axisBehavior(.horizontalOnly)
+
+ToolbarItem {
+    CompactCompassControl()
+}
+.axisBehavior(.verticalPreferred)
+```
+
+Use `.horizontalOnly` when related states must stay together and one representation cannot fit a fixed-width vertical bar. Use `.verticalPreferred` only when a custom view has a compact vertical representation. Otherwise keep `.automatic`.
+
+For a custom item's presentation details, an iOS 27.1-only view can read `@Environment(\.toolbarVerticalEdge)`. A non-`nil` value means the environment supports a vertical bar on that directional edge; use it to select a compact representation, not to add safe-area spacing. Keep the property declaration in an `@available(iOS 27.1, *)` type selected behind `#available`.
+
+When a view combines a toolbar and tab bar, `.toolbarVerticalCompressionBehavior(.prefersToolbarItems)` keeps toolbar actions visible longer, while `.prefersTabBar` favors destinations. The default `.automatic` compresses toolbar items first. Choose based on the experience's primary task, then use the existing SDK 27 [overflow and visibility](#sdk-27-overflow-and-visibility) APIs to prioritize individual actions rather than duplicating overflow controls.
+
+Most interfaces should keep automatic vertical behavior. Use `.toolbarVerticalBehavior(.disabled)` only for a narrow exception, such as a bottom-heavy single-page interface or a sheet whose lone toolbar item would cost more space than it saves. All of these vertical-bar APIs require iOS 27.1; preserve the ordinary system toolbar as the earlier-OS fallback.
+
 ## SDK 27 overflow and visibility
 
 When toolbar content does not fit, the system can move lower-priority items into an overflow menu. `visibilityPriority(_:)` is available on iOS 27+, macOS 26.1+, watchOS 27+, tvOS 27+, and visionOS 27+. `.automatic` is available on every supported platform. `.low` and `.high` are available only on iOS and macOS. `ToolbarItemVisibilityPriority(higherThan:)` and `(lowerThan:)` are available on iOS 27+ and macOS 27+.
