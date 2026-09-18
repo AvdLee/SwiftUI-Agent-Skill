@@ -96,7 +96,7 @@ Use `ViewThatFits` when a compact alternative should replace a layout that overf
 
 ## Adaptive Safe Areas
 
-Make layout decisions from the size SwiftUI proposes to the view. A `GeometryProxy.size` already describes the offered content region, so do not subtract `safeAreaInsets` from it or apply those insets again as padding. That double-counts space SwiftUI already reserved.
+Make layout decisions from the size SwiftUI proposes to the view. Flag code that subtracts a `GeometryProxy`'s safe-area insets from its size, or reapplies those same insets as padding inside the reporting view: `GeometryProxy.size` already describes the offered content region, so that double-counts space SwiftUI reserved. Reading insets for diagnostics or passing geometry to a container that has a different proposal is not itself a bug; the problem is applying the same inset twice.
 
 Choose the safe-area modifier by content:
 

@@ -142,7 +142,7 @@ OptimizedImageView(
 
 ### Reusable Downsampling Actor
 
-For production use, wrap the logic in an `actor` with scale-aware sizing and cache-disabled source options. Display scale belongs to the view's environment because it can differ by scene and display. Read it in the SwiftUI view and pass it into the processor; the actor should not consult global screen state.
+For production use, wrap the logic in an `actor` with scale-aware sizing and cache-disabled source options. Apply this pattern when the processor converts a target measured in SwiftUI points into pixels. Display scale belongs to the view's environment because it can differ by scene and display. Read it in the SwiftUI view and pass it into the processor; the actor should not consult global screen state. If the caller already supplies pixel dimensions, do not multiply by display scale again.
 
 ```swift
 actor ImageProcessor {

@@ -1,6 +1,6 @@
 ---
 name: swiftui-expert-skill
-description: Use when writing, reviewing, or refactoring SwiftUI code for iOS or macOS, including state and `@Observable` data flow, view composition, resizable layouts, safe areas, display scale, performance, lists, environment, localization, animation, Liquid Glass, and API migration. Also use for `@State` initialization or synthesized-property diagnostics, `@ContentBuilder` ambiguity, `reorderable` drag/drop, custom `AsyncImage` `URLSession`, `toolbarVerticalEdge`, swipe actions outside List, item-bound `alert`/`confirmationDialog`, `ToolbarOverflowMenu`, `AnimatableValues`, Document APIs (`Document`/`DocumentReader`), document autosave or undo failures, custom UTType/document migrations, and Instruments `.trace` capture or analysis.
+description: Use when writing, reviewing, or refactoring SwiftUI code for iOS or macOS, including state and `@Observable` data flow, view composition, resizable layouts, safe areas, display scale, performance, lists, environment, localization, animation, Liquid Glass, and API migration. Also use for `@State` initialization or synthesized-property diagnostics, `@ContentBuilder` ambiguity, `reorderable` drag/drop, custom `AsyncImage` `URLSession`, `toolbarVerticalEdge`, swipe actions outside List, item-bound `alert`/`confirmationDialog`, `ToolbarOverflowMenu`, `AnimatableValues`, Document APIs (`Document`/`DocumentReader`), and Instruments `.trace` capture or analysis.
 ---
 
 # SwiftUI Expert Skill
@@ -18,7 +18,6 @@ description: Use when writing, reviewing, or refactoring SwiftUI code for iOS or
 - Present performance optimizations as suggestions, not requirements
 - Use `#available` gating with sensible fallbacks for version-specific APIs
 - For layout and rendering inputs, read the value nearest the SwiftUI view that consumes it; do not substitute process-global screen state
-- Route document autosave/undo failures and custom format migrations to `references/document-apps.md` before proposing code
 
 ## Task Workflow
 
@@ -103,7 +102,7 @@ Consult the reference file for each topic relevant to the current task:
 | View composition | `references/view-structure.md` |
 | View modifiers and identity | `references/modifier-patterns.md` |
 | Performance | `references/performance-patterns.md` |
-| Lists, ForEach, and unary rows | `references/list-patterns.md` |
+| Lists and ForEach | `references/list-patterns.md` |
 | Resizable layout, safe areas, and `toolbarVerticalEdge` | `references/layout-best-practices.md` |
 | Sheets and navigation | `references/sheet-navigation-patterns.md` |
 | ScrollView, scroll position, and scroll geometry | `references/scroll-patterns.md` |
@@ -116,7 +115,7 @@ Consult the reference file for each topic relevant to the current task:
 | Charts accessibility | `references/charts-accessibility.md` |
 | Image optimization and display scale | `references/image-optimization.md` |
 | Toolbars | `references/toolbar-patterns.md` |
-| Document apps, autosave/undo, and UTType migration | `references/document-apps.md` |
+| Document-based apps | `references/document-apps.md` |
 | WebKit | `references/webkit-integration.md` |
 | Styled text editing | `references/styled-text-editing.md` |
 | Liquid Glass (iOS 26+) | `references/liquid-glass.md` |
@@ -133,9 +132,9 @@ Consult the reference file for each topic relevant to the current task:
 
 ## Correctness Checklist
 
-These are correctness checks unless a line explicitly describes review guidance:
+These are hard rules -- violations are always bugs:
 
-- [ ] Recommend `private` for view-owned `@State`; do not silently change existing access control when extensions or tests may depend on it unless requested
+- [ ] `@State` properties are `private`
 - [ ] `@Binding` only where a child modifies parent state
 - [ ] Changing parent-owned inputs are not stored as `@State`/`@StateObject`; intentional state seeds are documented as one-time
 - [ ] `@StateObject` for view-owned objects; `@ObservedObject` for injected
@@ -146,7 +145,6 @@ These are correctness checks unless a line explicitly describes review guidance:
 - [ ] Custom `@Entry` default values are stable (no `Model()`/`Date()`/`UUID()` expressions)
 - [ ] SwiftUI display scale comes from `@Environment(\.displayScale)`, not global screen state
 - [ ] Safe-area content does not double-apply `GeometryProxy.safeAreaInsets`
-- [ ] `Document` autosave failures are checked for missing undo registration; custom document formats are checked against their UTType and bundle declarations
 - [ ] `.animation(_:value:)` always includes the `value` parameter
 - [ ] `@FocusState` properties are `private`
 - [ ] No redundant `@FocusState` writes inside tap gesture handlers on `.focusable()` views
