@@ -1,6 +1,6 @@
 ---
 name: swiftui-expert-skill
-description: Use when writing, reviewing, or refactoring SwiftUI code for iOS or macOS, including state and `@Observable` data flow, view composition, resizable layouts, safe areas, display scale, performance, lists, environment, localization, animation, Liquid Glass, and API migration. Also use for `@State` initialization or synthesized-property diagnostics, `@ContentBuilder` ambiguity, `reorderable` drag/drop, custom `AsyncImage` `URLSession`, `toolbarVerticalEdge`, swipe actions outside List, item-bound `alert`/`confirmationDialog`, `ToolbarOverflowMenu`, `AnimatableValues`, Document APIs (`Document`/`DocumentReader`), and Instruments `.trace` capture or analysis.
+description: Use when writing, reviewing, or refactoring SwiftUI code for iOS or macOS, including state and `@Observable` data flow, view composition, resizable layouts, safe areas, display scale, performance, lists, environment, localization, animation, Liquid Glass, and API migration. Also use for iPhone Duo or foldable layouts, `ArrangementView`, `ReservedRegion`, hinge effects, vertical bars, `@State` initialization or synthesized-property diagnostics, `@ContentBuilder` ambiguity, `reorderable` drag/drop, custom `AsyncImage` `URLSession`, swipe actions outside List, item-bound `alert`/`confirmationDialog`, `ToolbarOverflowMenu`, `AnimatableValues`, Document APIs (`Document`/`DocumentReader`), and Instruments `.trace` capture or analysis.
 ---
 
 # SwiftUI Expert Skill
@@ -103,7 +103,8 @@ Consult the reference file for each topic relevant to the current task:
 | View modifiers and identity | `references/modifier-patterns.md` |
 | Performance | `references/performance-patterns.md` |
 | Lists and ForEach | `references/list-patterns.md` |
-| Resizable layout, safe areas, and `toolbarVerticalEdge` | `references/layout-best-practices.md` |
+| Resizable layout, safe areas, arrangements, and reserved regions | `references/layout-best-practices.md` |
+| iPhone Duo form-factor behavior | `references/iphone-duo.md` |
 | Sheets and navigation | `references/sheet-navigation-patterns.md` |
 | ScrollView, scroll position, and scroll geometry | `references/scroll-patterns.md` |
 | Focus management | `references/focus-patterns.md` |

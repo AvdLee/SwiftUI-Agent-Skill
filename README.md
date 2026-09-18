@@ -168,6 +168,7 @@ skills/swiftui-expert-skill/
     environment-patterns.md - @Entry, stable defaults, custom actions, and environment invalidation
     focus-patterns.md
     image-optimization.md - AsyncImage usage, downsampling, caching
+    iphone-duo.md - Duo displays, fold regions, displacement, hinge effects, and scene accessories
     latest-apis.md
     layout-best-practices.md - Layout patterns and GeometryReader alternatives
     liquid-glass.md - iOS 26+ glass effects and fallback patterns

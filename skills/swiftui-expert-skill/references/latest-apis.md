@@ -11,6 +11,7 @@
 - [When Targeting iOS 18+](#when-targeting-ios-18)
 - [When Targeting iOS 26+](#when-targeting-ios-26)
 - [When Targeting iOS 27+](#when-targeting-ios-27)
+- [When Targeting iOS 27.1+](#when-targeting-ios-271)
 
 ---
 
@@ -485,6 +486,7 @@ Use the focused topic references for detailed guidance:
 - [`view-structure.md`](view-structure.md)
 - [`list-patterns.md`](list-patterns.md)
 - [`image-optimization.md`](image-optimization.md)
+- [`layout-best-practices.md`](layout-best-practices.md)
 - [`sheet-navigation-patterns.md`](sheet-navigation-patterns.md)
 - [`toolbar-patterns.md`](toolbar-patterns.md)
 
@@ -509,6 +511,17 @@ Other lookup entries from the SDK include:
 Platform-specific entries include `CarouselTabViewStyle` → `VerticalTabViewStyle` and `listRowPlatterColor(_:)` → `listItemTint(_:)` on watchOS, `ControlActiveState` → `appearsActive` on macOS, and `SurroundingsEffect.systemDark` → `.dark` on visionOS.
 
 Search this file's lookup table when migrating an API that the 27 SDK marks soft-deprecated. Do not introduce unrelated migrations during feature work; follow [`soft-deprecation.md`](soft-deprecation.md).
+
+---
+
+## When Targeting iOS 27.1+
+
+- `ArrangementView`, `.split` / `.overlay`, and arrangement axis constraints provide adaptive two-region layout. See [`layout-best-practices.md`](layout-best-practices.md).
+- `ReservedRegion` and `GeometryProxy.reservedRegions(kind:options:layoutDirectionBehavior:)` expose division and occlusion geometry for custom layouts. See [`layout-best-practices.md`](layout-best-practices.md).
+- `ToolbarContent.axisBehavior(_:)`, `toolbarVerticalEdge`, `toolbarVerticalCompressionBehavior(_:)`, and `toolbarVerticalBehavior(_:)` support adaptive vertical bars. See [`toolbar-patterns.md`](toolbar-patterns.md).
+- `onHingeChange` and the optional `DeviceHingeContext.hinge` support live effects and interactions, not layout decisions. For iPhone Duo-specific use, see [`iphone-duo.md`](iphone-duo.md).
+
+These APIs are from the beta iOS 27.1 SDK. Gate runtime use with `#available(iOS 27.1, *)`, provide an earlier-system fallback, and recheck semantics against the shipping SDK.
 
 ---
 
