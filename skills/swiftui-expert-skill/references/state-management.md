@@ -5,6 +5,7 @@
 - [Property Wrapper Selection Guide](#property-wrapper-selection-guide)
 - [@State](#state)
 - [SDK 27 `@State` Macro](#sdk-27-state-macro)
+- [`@Observable` Models Must Be Classes](#observable-models-must-be-classes)
 - [Property Wrappers Inside @Observable Classes](#property-wrappers-inside-observable-classes)
 - [Make @Observable Property Types Equatable](#make-observable-property-types-equatable)
 - [@Observable Dependency Granularity](#observable-dependency-granularity)
@@ -24,7 +25,7 @@
 
 | Wrapper | Use When | Notes |
 |---------|----------|-------|
-| `@State` | Internal view state that triggers updates | Must be `private` |
+| `@State` | Internal view state that triggers updates | Prefer `private` for view-owned state |
 | `@Binding` | Child view needs to modify parent's state | Don't use for read-only |
 | `@Bindable` | iOS 17+: View receives `@Observable` object and needs bindings | For injected observables |
 | `let` | Read-only value passed from parent | Simplest option |
@@ -37,7 +38,7 @@
 
 ## @State
 
-Always mark `@State` properties as `private`. Use for internal view state that triggers UI updates.
+Prefer `private` for view-owned `@State`. This communicates ownership and keeps state out of synthesized initializers.
 
 ```swift
 // Correct
@@ -98,7 +99,25 @@ Other source-compatibility failures:
 - “Invalid redeclaration of synthesized property”: another property wrapper composed with `@State` is colliding with macro-generated storage. Remove the redundant wrapper or restructure the composition.
 - Missing private memberwise initializer: SDK 27 may not synthesize it for a view containing `@State`. Define the initializer explicitly instead of delegating to the missing memberwise initializer.
 
-Keep `@State` private. Use an initializer seed only for intentional one-time ownership; use a plain value or `@Binding` when later parent updates must propagate.
+For new code, keep view-owned `@State` private. During review, do not silently change existing access control when extensions, previews, or tests may depend on it; recommend the change or apply it only when requested and after checking those uses. Use an initializer seed only for intentional one-time ownership; use a plain value or `@Binding` when later parent updates must propagate.
+
+## `@Observable` Models Must Be Classes
+
+The compiler rejects `@Observable` on an actor type. Actors have their own isolation and cannot be transformed into Observation-tracked models:
+
+```swift
+// Does not compile: @Observable cannot be applied to actor types.
+@Observable actor SearchModel {}
+
+// Use a class with isolation that matches its UI-facing mutations.
+@MainActor
+@Observable
+final class SearchModel {
+    var query = ""
+}
+```
+
+Use an actor behind the model when background serialization or shared mutable work needs actor isolation, then publish UI-facing state through the appropriately isolated class. This keeps SwiftUI observation synchronous where view reads occur without discarding actor isolation for the underlying work.
 
 ## Property Wrappers Inside @Observable Classes
 
@@ -308,7 +327,7 @@ struct ChildView: View {
 }
 ```
 
-Mark `@State` and `@StateObject` as `private` so they do not appear in a generated initializer. A custom initializer may intentionally seed private, view-owned state once; make that ownership explicit and do not expect later argument changes to replace the state. See [SDK 27 `@State` Macro](#sdk-27-state-macro) for initialization diagnostics.
+Prefer `private` for new view-owned `@State` and `@StateObject` so they do not appear in a generated initializer. Treat this as review guidance, not permission to change existing access control without checking extension and test dependencies. A custom initializer may intentionally seed private, view-owned state once; make that ownership explicit and do not expect later argument changes to replace the state. See [SDK 27 `@State` Macro](#sdk-27-state-macro) for initialization diagnostics.
 
 ## @Bindable (iOS 17+)
 
@@ -471,7 +490,7 @@ SwiftUI can't track changes through nested `ObservableObject` properties. Workar
 2. **Mark `@Observable` classes with `@MainActor` for thread safety (unless using default actor isolation)`**
 3. Use `@State` with `@Observable` classes (not `@StateObject`)
 4. Use `@Bindable` for injected `@Observable` objects that need bindings
-5. **Always mark `@State` and `@StateObject` as `private`**
+5. Prefer `private` for view-owned `@State` and `@StateObject`; do not silently change existing access control during unrelated implementation
 6. Do not store changing parent-owned inputs as `@State` or `@StateObject`; use private state only for intentional child ownership
 7. With `@Observable`, nested objects work fine; with `ObservableObject`, pass nested objects directly to child views
 8. **Always add `@ObservationIgnored` to property wrappers** (e.g., `@AppStorage`, `@SceneStorage`, `@Query`) inside `@Observable` classes — they conflict with the macro's property transformation

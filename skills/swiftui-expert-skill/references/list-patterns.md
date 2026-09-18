@@ -127,6 +127,19 @@ Replacing `AnyView` with a `@ViewBuilder` helper that still branches at the top 
 
 The fix is to wrap branching content in any single-root container (`VStack`, `HStack`, `ZStack`, or a custom wrapper) so the row is always exactly one top-level view, as shown above. `Group` is a passthrough rather than a layout container, so it does not make multiple children unary. A top-level `if` without an `else` is also "multi" (0 or 1 views); if some elements shouldn't be rows at all, filter the collection before it reaches the `ForEach` rather than producing a zero-view row.
 
+Do not "fix" a structurally different `switch` by flattening every case into one view and recreating the differences with conditional modifiers. That can erase semantics, accessibility, or behavior merely to force a common type. Keep each case's natural output and wrap the `switch` in one row container:
+
+```swift
+VStack {
+    switch item.kind {
+    case .message:
+        MessageRow(item: item)
+    case .download:
+        DownloadRow(item: item)
+    }
+}
+```
+
 To find non-constant row builders in an existing app, launch with `-LogForEachSlowPath YES`; SwiftUI logs each `ForEach` inside a lazy container whose row body produces a non-constant number of views.
 
 ### Keep ids stable, unique, and cheap
@@ -526,6 +539,7 @@ Table(people) { /* columns */ }
 - [ ] Identifiable IDs are truly unique across all items
 - [ ] id is stable across edits (not derived from a mutable property), created outside `body`, and cheap to hash
 - [ ] Constant number of views per ForEach element; rows are unary (single top-level view)
+- [ ] Structurally different switch cases remain distinct inside one row container, rather than being flattened into conditional modifiers
 - [ ] No inline filtering in ForEach (prefilter and cache instead)
 - [ ] No `AnyView` in list rows
 - [ ] `.enumerated()` uses the element's id (not `\.offset`); no `Array(...)` wrapper needed on Swift 6.1+

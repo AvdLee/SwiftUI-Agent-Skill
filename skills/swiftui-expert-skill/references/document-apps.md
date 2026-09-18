@@ -16,6 +16,7 @@
 - [Export](#export)
 - [Migrating from FileDocument](#migrating-from-filedocument)
 - [Content Types](#content-types)
+- [Troubleshooting Checklist](#troubleshooting-checklist)
 
 ---
 
@@ -103,6 +104,8 @@ struct TextDocumentView: View {
 
 Registering with `withTarget: document` gives redo for free — SwiftUI replays the same closure with the restored value.
 
+When autosave fails, route the investigation here first: confirm the app uses `DocumentGroup` as its first scene, verify every user-visible mutation registers undo through the environment manager, and test that undo and redo actually restore model values. Do not start by adding manual save calls; they bypass the change-tracking contract instead of repairing it.
+
 ## DocumentGroup and Launch Scenes
 
 `DocumentGroup` (or `DocumentGroupLaunchScene`) must be the app's first scene to opt into autosave, file coordination, file dialogs, undo management, and conflict resolution. On iOS, set `UISupportsDocumentBrowser` to `YES` to present a document browser.
@@ -137,6 +140,8 @@ extension DocumentCreationSource {
 ## Custom Readers and Writers (Direct URL Access)
 
 Implement `DocumentReader` / `DocumentWriter` directly when you need streaming, custom write logic, or a file URL for frameworks such as Core Graphics, AVFoundation, or PDFKit. Their `Source` and `Destination` associated types default to `URL`; specialize them only when the backing store requires another type.
+
+Those associated-type defaults do not make every source or destination compatible with SwiftUI scenes. Public `DocumentGroup` initializers constrain a reader's `Source` and a writer's `Destination` to `URL`, and `fileExporter` constrains the writer destination to `URL`. A custom non-URL reader or writer can still be useful in another pipeline, but it cannot be passed directly to these APIs. Do not respond to the resulting generic-constraint error by force-casting; keep a URL-facing adapter or choose a URL-based implementation.
 
 ```swift
 struct Reader: DocumentReader {
@@ -181,7 +186,7 @@ SwiftUI coordinates `read` and `write` for you. For any other disk access — lo
 
 ## Export
 
-Export to another location or format with `fileExporter(isPresented:document:contentType:defaultFilename:onCompletion:)`, passing the `WritableDocument` itself.
+Export to another location or format with `fileExporter(isPresented:document:contentType:defaultFilename:onCompletion:)`, passing the `WritableDocument` itself. Its writer destination is constrained to `URL`, even though `DocumentWriter.Destination` has a general associated-type default.
 
 ## Migrating from FileDocument
 
@@ -207,3 +212,21 @@ extension UTType {
 ```
 
 Use `static let` for exported types and `static var` for `UTType(importedAs:)` types. Custom identifiers use lowercase reverse-DNS syntax. Flat files conform to `public.data`; packages conform to `com.apple.package`.
+
+For a custom-type migration, keep these declarations aligned:
+
+- `UTExportedTypeDeclarations` for a format the app owns, or `UTImportedTypeDeclarations` for another owner's format, including `UTTypeConformsTo` and a `public.filename-extension` tag.
+- `CFBundleDocumentTypes` with the same identifier in `LSItemContentTypes`, plus `CFBundleTypeRole` (`Editor` or `Viewer`) and an appropriate `LSHandlerRank`.
+- The code-level `UTType` identifier and `readableContentTypes` / `writableContentTypes`.
+
+If files are unavailable, grayed out, treated as folders, or open read-only after a migration, compare those identifiers character-for-character and verify the conformance chain. Use `uttype --verbose <identifier>` and `uttype --conformsto public.data <identifier>` for flat files, or `com.apple.package` for packages. Do not change document model code until registration and conformance are known to be correct.
+
+## Troubleshooting Checklist
+
+- [ ] Autosave failures are checked for a first-scene `DocumentGroup`, undo registration for every mutation, and working undo/redo
+- [ ] `snapshot(contentType:)` and `apply(snapshot:previous:)` stay cheap on the main actor; serialization remains in async reader/writer work
+- [ ] `DocumentGroup` reader sources and writer destinations are `URL`
+- [ ] `fileExporter` uses a writer whose destination is `URL`
+- [ ] Custom UTType identifiers match across code, type declarations, `LSItemContentTypes`, and document content-type arrays
+- [ ] Flat-file types conform to `public.data`; package types conform to `com.apple.package`
+- [ ] `FileDocument` and `ReferenceFileDocument` migrations preserve the soft-deprecation and deployment-target fallback guidance

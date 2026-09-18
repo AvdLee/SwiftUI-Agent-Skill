@@ -66,6 +66,15 @@ When reviewing existing manual `EnvironmentKey` / `FocusedValueKey` boilerplate,
 
 `@FocusedValue` uses the same comparison model as `@Environment`. Rules below for closures, defaults, unused reads, and high-frequency updates apply to both.
 
+### Route `@Entry` default diagnostics
+
+Treat compiler diagnostics on an `@Entry` declaration as a clue about the default's value shape:
+
+- A diagnostic involving a closure or function default points to an uncomparable custom value. Replace the function with a value that stores its inputs and exposes a method or `callAsFunction`, or inject an observable model. Do not hide the closure inside another struct.
+- A diagnostic involving a class default commonly points to `@Entry var model = Model()`. Repeated fallback reads allocate distinct identities. Use a stable `static let` backing value when a real default instance is meaningful, or an optional `nil` default when absence is the actual state.
+
+Do not mechanically apply the class fix to every value containing a reference. A reference supplied by an existing `let` is stable; a reference allocated by the default expression is not.
+
 ## Never Store Closures in Custom Keys
 
 SwiftUI cannot reliably compare functions. A closure in a custom environment or focused-value key can therefore make every reader invalidate whenever the environment propagates. Wrapping the closure in a struct or storing it on a `View` does not fix comparison; the closure is still present.
@@ -117,7 +126,7 @@ extension EnvironmentValues {
 }
 ```
 
-`Equatable` conformance does not repair an unstable default: the expression still allocates or changes on every read. Conversely, do not rewrite already-stable defaults. Literals, enum cases without associated values, `nil`, and structs built only from deterministic values or stable references are stable even without `Equatable`.
+`Equatable` conformance cannot repair an unstable default: the expression still allocates or changes on every read, initializers still run, and separate fallback readers can receive different instances. Equality may mask invalidation while leaving identity and side effects wrong. Conversely, do not rewrite already-stable defaults. Literals, enum cases without associated values, `nil`, and structs built only from deterministic values or stable references are stable even without `Equatable`.
 
 A live unstable default has readers falling back and paying invalidation now. A latent one is currently covered by an upstream `.environment` injection; fixing it is still correct but is a regression guard, not a current-cost recovery.
 
@@ -154,6 +163,7 @@ Type-based `@Environment(Model.self)` uses Observation's property-level tracking
 ## Checklist
 
 - [ ] Custom values use `@Entry`; flag leftover manual keys without rewriting them unprompted
+- [ ] `@Entry` closure/class diagnostics are mapped to the value shape before choosing a replacement
 - [ ] Custom environment and focused-value keys do not store closures
 - [ ] Default expressions return the same result on every fallback read (live or latent)
 - [ ] `@FocusedValue` follows the same comparison and unused-read rules as `@Environment`

@@ -5,6 +5,7 @@
 - [Relative Layout Over Constants](#relative-layout-over-constants)
 - [Context-Agnostic Views](#context-agnostic-views)
 - [Adaptive and Resizable Interfaces](#adaptive-and-resizable-interfaces)
+- [Adaptive Safe Areas](#adaptive-safe-areas)
 - [Own Your Container](#own-your-container)
 - [Layout Performance](#layout-performance)
 - [View Logic and Testability](#view-logic-and-testability)
@@ -92,6 +93,18 @@ struct AdaptiveStack<Content: View>: View {
 ```
 
 Use `ViewThatFits` when a compact alternative should replace a layout that overflows the proposal. Do not branch layout on device orientation or a cached screen size.
+
+## Adaptive Safe Areas
+
+Make layout decisions from the size SwiftUI proposes to the view. A `GeometryProxy.size` already describes the offered content region, so do not subtract `safeAreaInsets` from it or apply those insets again as padding. That double-counts space SwiftUI already reserved.
+
+Choose the safe-area modifier by content:
+
+- Use `safeAreaBar(edge:)` for bar content on iOS 26 and aligned releases. It reserves space and supplies bar appearance and scroll-edge behavior. Use `safeAreaInset(edge:)` as the fallback for older targets.
+- Use `safeAreaInset(edge:)` for other controls or content that should occupy an inset region.
+- Scope `ignoresSafeArea(_:edges:)` to only the intended edges. Ignoring all edges is appropriate for a truly full-bleed visual layer such as a background or scrim, not for readable or interactive content.
+
+If an iOS 27.1 app genuinely needs to know which edge hosts a system vertical toolbar, read `@Environment(\.toolbarVerticalEdge)`. The optional value updates with the environment and reports a directional edge; use it to adapt toolbar-adjacent behavior, not to derive safe-area spacing. Put the environment property in an `@available(iOS 27.1, *)` view or modifier selected behind a `#available` branch, because the property declaration itself references the new API. Let safe-area APIs handle layout on earlier releases.
 
 ## Own Your Container
 
@@ -278,6 +291,10 @@ Button("Publish Project") {
 - [ ] Use relative layout over hard-coded constants
 - [ ] Views work in any context (don't assume screen size)
 - [ ] Adapt with proposed size, size classes, `ViewThatFits`, or `AnyLayout` — not `UIScreen.main` or orientation
+- [ ] Bar content uses `safeAreaBar` (with an availability fallback); other inset content uses `safeAreaInset`
+- [ ] `ignoresSafeArea` names only intended edges unless the layer is truly full-bleed
+- [ ] `GeometryProxy.safeAreaInsets` are not applied again to an already-inset proposed size
+- [ ] `toolbarVerticalEdge` is used only when toolbar-edge identity is needed and is gated for iOS 27.1
 - [ ] Custom views own static containers
 - [ ] Avoid deep view hierarchies (layout thrash)
 - [ ] Gate frequent geometry updates by thresholds
