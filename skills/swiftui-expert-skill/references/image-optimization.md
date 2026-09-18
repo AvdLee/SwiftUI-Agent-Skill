@@ -142,12 +142,11 @@ OptimizedImageView(
 
 ### Reusable Downsampling Actor
 
-For production use, wrap the logic in an `actor` with scale-aware sizing and cache-disabled source options:
+For production use, wrap the logic in an `actor` with scale-aware sizing and cache-disabled source options. Apply this pattern when the processor converts a target measured in SwiftUI points into pixels. Display scale belongs to the view's environment because it can differ by scene and display. Read it in the SwiftUI view and pass it into the processor; the actor should not consult global screen state. If the caller already supplies pixel dimensions, do not multiply by display scale again.
 
 ```swift
 actor ImageProcessor {
-    func downsample(data: Data, targetSize: CGSize) -> UIImage? {
-        let scale = await UIScreen.main.scale
+    func downsample(data: Data, targetSize: CGSize, scale: CGFloat) -> UIImage? {
         let maxPixel = max(targetSize.width, targetSize.height) * scale
         let sourceOptions: [CFString: Any] = [kCGImageSourceShouldCache: false]
         guard let source = CGImageSourceCreateWithData(data as CFData, sourceOptions as CFDictionary) else { return nil }
@@ -161,9 +160,35 @@ actor ImageProcessor {
         return UIImage(cgImage: cgImage)
     }
 }
+
+struct ProcessedImageView: View {
+    let data: Data
+    let targetSize: CGSize
+    let processor: ImageProcessor
+
+    @Environment(\.displayScale) private var displayScale
+    @State private var image: UIImage?
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(uiImage: image).resizable().scaledToFit()
+            } else {
+                ProgressView()
+            }
+        }
+        .task(id: displayScale) {
+            image = await processor.downsample(
+                data: data,
+                targetSize: targetSize,
+                scale: displayScale
+            )
+        }
+    }
+}
 ```
 
-Key details: `kCGImageSourceShouldCache: false` on the source prevents the full-resolution image from being cached in memory. Multiplying `targetSize` by `UIScreen.main.scale` ensures the thumbnail is sharp on Retina displays. `kCGImageSourceShouldCacheImmediately: true` on the thumbnail forces decoding at creation time rather than at first render.
+Key details: `kCGImageSourceShouldCache: false` on the source prevents the full-resolution image from being cached in memory. Multiplying the point target size by the view's `displayScale` produces the required pixel size and updates correctly if the scene moves to a display with a different scale. `kCGImageSourceShouldCacheImmediately: true` on the thumbnail forces decoding at creation time rather than at first render.
 
 ### When to Suggest This Optimization
 
@@ -236,7 +261,8 @@ Variants are available via naming convention: `star.circle.fill`, `star.square.f
 - [ ] On OS 27, rely on default HTTP caching unless a custom cache policy or `URLSession` is needed
 - [ ] Consider downsampling for `UIImage(data:)` in performance-sensitive scenarios
 - [ ] Decode and downsample images off the main thread
-- [ ] Use appropriate target sizes for downsampling
+- [ ] Convert point target sizes to pixels with the view's `@Environment(\.displayScale)`
+- [ ] Pass display scale into processors; do not read global screen state from an actor
 - [ ] Consider image caching for frequently accessed images
 - [ ] Use SF Symbols with appropriate rendering modes
 

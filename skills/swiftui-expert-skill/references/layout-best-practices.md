@@ -5,6 +5,7 @@
 - [Relative Layout Over Constants](#relative-layout-over-constants)
 - [Context-Agnostic Views](#context-agnostic-views)
 - [Adaptive and Resizable Interfaces](#adaptive-and-resizable-interfaces)
+- [Adaptive Safe Areas](#adaptive-safe-areas)
 - [Own Your Container](#own-your-container)
 - [Layout Performance](#layout-performance)
 - [View Logic and Testability](#view-logic-and-testability)
@@ -92,6 +93,28 @@ struct AdaptiveStack<Content: View>: View {
 ```
 
 Use `ViewThatFits` when a compact alternative should replace a layout that overflows the proposal. Do not branch layout on device orientation or a cached screen size.
+
+Read `@Environment(\.horizontalSizeClass)` or `@Environment(\.verticalSizeClass)` in the `View` or `ViewModifier` nearest the layout decision. Do not cache a size class in an `App`, `Scene`, model, or view model: those objects do not own the view's current proposal and can go stale during resizing. Move the decision into the view, or pass the current value into non-view code at the point of use when that code genuinely needs it.
+
+At a representable boundary, use `context.environment.horizontalSizeClass` or `context.environment.verticalSizeClass` in `makeUIView` / `updateUIView` and the corresponding view-controller methods. This carries the SwiftUI layout context into the bridge without process-global state.
+
+Classify an idiom check before replacing it. Use a size class only when the underlying question is available width or height. A genuine platform, device-idiom, or product-capability decision is not equivalent to a size-class decision, and SwiftUI exposes no user-interface-idiom environment value. Preserve that distinction rather than inventing a size-class mapping or encouraging a global idiom read for ordinary layout.
+
+## Adaptive Safe Areas
+
+Make layout decisions from the size SwiftUI proposes to the view. Flag code that subtracts a `GeometryProxy`'s safe-area insets from its size, or reapplies those same insets as padding inside the reporting view: `GeometryProxy.size` already describes the offered content region, so that double-counts space SwiftUI reserved. Reading insets for diagnostics or passing geometry to a container that has a different proposal is not itself a bug; the problem is applying the same inset twice.
+
+Choose the safe-area modifier by content:
+
+- Use `safeAreaBar(edge:)` for bar content on iOS 26 and aligned releases. It reserves space and supplies bar appearance and scroll-edge behavior. Use `safeAreaInset(edge:)` as the fallback for older targets.
+- Use `safeAreaInset(edge:)` for other controls or content that should occupy an inset region.
+- When interactive bar content in a `ZStack` or overlay covers scrolling or other content, move the bar out to `safeAreaBar(edge:)` so SwiftUI reserves its space. Do not apply this replacement to a full-bleed background, gradient, artwork layer, or scrim.
+- Use `safeAreaPadding` only for an intentional fixed design margin measured inward from the safe area. It does not read or track the current inset, so do not replace a hardcoded stand-in for a bar or device inset with `safeAreaPadding`; remove the stand-in and let safe-area layout reserve the space.
+- Scope `ignoresSafeArea(_:edges:)` to only the intended edges. Ignoring all edges is appropriate for a truly full-bleed visual layer such as a background or scrim, not for readable or interactive content.
+
+Avoid `GeometryReader` whose only purpose is to read and reapply safe-area insets. Prefer `safeAreaBar`, `safeAreaInset`, or an intentional fixed `safeAreaPadding`, which express placement without manually carrying inset values.
+
+If an iOS 27.1 app genuinely needs to know which edge hosts a system vertical toolbar, read `@Environment(\.toolbarVerticalEdge)`. The optional value updates with the environment and reports a directional edge; use it to adapt toolbar-adjacent behavior, not to derive safe-area spacing. Put the environment property in an `@available(iOS 27.1, *)` view or modifier selected behind a `#available` branch, because the property declaration itself references the new API. Let safe-area APIs handle layout on earlier releases.
 
 ## Own Your Container
 
@@ -278,6 +301,14 @@ Button("Publish Project") {
 - [ ] Use relative layout over hard-coded constants
 - [ ] Views work in any context (don't assume screen size)
 - [ ] Adapt with proposed size, size classes, `ViewThatFits`, or `AnyLayout` — not `UIScreen.main` or orientation
+- [ ] Size classes are read nearest the consuming view (or from representable context), not cached in app/model state
+- [ ] Size classes replace available-space decisions, not genuine idiom or product-capability decisions
+- [ ] Bar content uses `safeAreaBar` (with an availability fallback); other inset content uses `safeAreaInset`
+- [ ] Overlay bars that cover content move to `safeAreaBar`; full-bleed visual layers remain overlays/backgrounds
+- [ ] `safeAreaPadding` represents a fixed design margin, not a stand-in for a dynamic inset
+- [ ] `ignoresSafeArea` names only intended edges unless the layer is truly full-bleed
+- [ ] `GeometryReader` is not used solely to read and reapply safe-area insets
+- [ ] `toolbarVerticalEdge` is used only when toolbar-edge identity is needed and is gated for iOS 27.1
 - [ ] Custom views own static containers
 - [ ] Avoid deep view hierarchies (layout thrash)
 - [ ] Gate frequent geometry updates by thresholds
