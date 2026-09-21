@@ -320,8 +320,8 @@ struct GlassSegmentedControl: View {
         if #available(iOS 26, *) {
             GlassEffectContainer(spacing: 4) {
                 HStack(spacing: 4) {
-                    ForEach(options.indices, id: \.self) { index in
-                        Button(options[index]) {
+                    ForEach(Array(options.enumerated()), id: \.offset) { index, option in
+                        Button(option) {
                             withAnimation(.smooth) {
                                 selection = index
                             }
@@ -341,8 +341,8 @@ struct GlassSegmentedControl: View {
             }
         } else {
             Picker("Options", selection: $selection) {
-                ForEach(options.indices, id: \.self) { index in
-                    Text(options[index]).tag(index)
+                ForEach(Array(options.enumerated()), id: \.offset) { index, option in
+                    Text(option).tag(index)
                 }
             }
             .pickerStyle(.segmented)
