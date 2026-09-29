@@ -12,21 +12,21 @@ Hardware placement is asymmetric. The outer and inner cameras occupy different p
 
 ## Choose the Technique by Screen Structure
 
-Classify the screen by its structure before choosing any fold technique; reaching for `ArrangementView` or `reservedRegions` first tends to misread the screen. Check in this order:
+Classify the screen by structure before choosing a fold technique; starting from `ArrangementView` or `reservedRegions` tends to misread the screen. Check in this order:
 
-1. **Rows push further screens** (settings, mailboxes, folders; even a short list; rows that are `NavigationLink`s on compact width): `NavigationSplitView`. It collapses on compact width, can split along a fold, and scales to iPad and resizable windows with no Duo-specific code. Details in [sheet-navigation-patterns.md](sheet-navigation-patterns.md#large-displays).
-2. **Cards or a feed in one `ScrollView`** (dashboards, collection grids): reflow into two columns with a custom `Layout`, with the gutter over a vertical fold. Do not split at a horizontal fold. See [two-column reflow](layout-best-practices.md#two-column-reflow-for-card-screens).
+1. **Rows push further screens** (settings, mailboxes, folders, even a short list): `NavigationSplitView` needs no Duo-specific code; it collapses on compact width and scales to iPad and resizable windows. See [sheet-navigation-patterns.md](sheet-navigation-patterns.md#large-displays).
+2. **Cards or a feed in one `ScrollView`** (dashboards, collection grids): [reflow into two columns](layout-best-practices.md#two-column-reflow-for-card-screens) with the gutter over a vertical fold; don't split at a horizontal fold.
 3. **Two peer regions without navigation** (media and controls, visual and copy): `ArrangementView` with `.split`, outside any scroll view.
-4. **Content plus a supplementary queue or panel**: consider the compact pattern, a persistent bar that pushes the full view (like the Music mini player), instead of a side column. If `.inspector` is used, attach it around the `NavigationStack`, not to a pushed screen; in Xcode 27.1, an inspector on a pushed screen that hosted its own `NavigationStack` broke pushes, and full-bleed content laid out underneath the inspector column.
+4. **Content plus a supplementary queue or panel**: consider keeping the compact pattern, a persistent bar that pushes the full view (like the Music mini player). If you use `.inspector`, attach it around the `NavigationStack`, not on a pushed screen; in Xcode 27.1 that broke pushes and put full-bleed content under the inspector column.
 5. **Custom edge-to-edge chrome only**: read `reservedRegions` directly.
 
-In a portrait-only iPhone app, regular width effectively means the inner display; on iPhone Duo the inner display ignores the app's supported orientations, so it can still be landscape.
+In a portrait-only iPhone app, regular width effectively means the inner display, which ignores supported orientations and can still be landscape.
 
 ## Fold and Camera Regions
 
 The outer camera always shapes the outer-display area; standard safe areas and bars account for it. On the inner display, an active fold is represented as a `.division` reserved region because it separates the available area. The active FaceTime camera is an `.occlusion` region because it covers a smaller frame. Inner regions can change activity as the device pose and camera use change.
 
-System components (`NavigationStack`, `NavigationSplitView`, `TabView`, sheets, alerts, menus, `List`, `ScrollView`) already adapt around the fold and system UI. Do not displace continuously scrolling articles, feeds, documents, or lists merely because a fold exists; scrolling already preserves continuity. Pick the technique with the structure list above, then see [`ArrangementView`](layout-best-practices.md#two-region-arrangements-ios-271) and [reserved-region](layout-best-practices.md#reserved-regions-ios-271) details.
+System components (`NavigationStack`, `NavigationSplitView`, `TabView`, sheets, alerts, menus, `List`, `ScrollView`) already adapt around the fold and system UI. Do not displace continuously scrolling articles, feeds, documents, or lists merely because a fold exists. Pick the technique with the list above, then see [`ArrangementView`](layout-best-practices.md#two-region-arrangements-ios-271) and [reserved regions](layout-best-practices.md#reserved-regions-ios-271).
 
 ## Duo Displacement Heuristics
 
@@ -66,7 +66,7 @@ Scene accessories can pair supplementary content with the main scene on another 
 
 ## Verifying Layouts
 
-Scripted simulator tools cannot fold the device, rotate the inner display, or set the hinge angle, so don't spend iterations automating poses. Iterate on layout in Xcode Previews where possible and ask the user to confirm folded and landscape poses.
+Before claiming a fold or landscape layout works, check whether your environment can pose the iPhone Duo simulator. `simctl` cannot fold or rotate it, but the [RocketSim](https://www.rocketsim.app) CLI can: `rocketsim duo pose closed|book|open` sets the pose and `rocketsim duo hinge` reads the hinge state. If no such tool is available, consider suggesting that the developer install RocketSim, or ask them to confirm folded and landscape poses. Xcode Previews are another way to iterate on layout.
 
 ## Official Sources
 

@@ -274,35 +274,14 @@ Do not infer split-view behavior from the device family. Respond to the space Sw
 
 ### Large Displays
 
-For a screen whose rows push further screens (settings, mailboxes, folders), `NavigationSplitView` shows the next hierarchy level beside the list on large displays and collapses on compact width (see [the screen-structure rule](iphone-duo.md#choose-the-technique-by-screen-structure)). Useful configuration:
+When rows push further screens (settings, mailboxes, folders), `NavigationSplitView` shows the next level beside the list on large displays and collapses on compact width; see [the screen-structure rule](iphone-duo.md#choose-the-technique-by-screen-structure).
 
-```swift
-struct SettingsRoot: View {
-    @State private var visibility = NavigationSplitViewVisibility.all
-    @State private var selection: Page?
-
-    var body: some View {
-        NavigationSplitView(columnVisibility: $visibility) {
-            List(Page.allCases, selection: $selection) { page in
-                Text(page.title)
-            }
-            .navigationSplitViewColumnWidth(min: 320, ideal: 360)
-        } detail: {
-            NavigationStack {
-                DetailView(page: selection)
-            }
-        }
-        .toolbar(removing: .sidebarToggle)
-    }
-}
-```
-
-- Keep the sidebar visible with `columnVisibility` set to `.all` and `toolbar(removing: .sidebarToggle)` when hiding the list would strand the user.
-- Use `navigationSplitViewColumnWidth(min:ideal:)` when the sidebar holds cards or buttons that wrap at the default width. Avoid `max:`: in a fold-aligned pose the system can widen the sidebar to meet the fold, and a maximum caps it short.
-- Consider choosing the default detail by importance rather than position. When the pushed pages are secondary, a regular-width-only overview page selected from a summary row at the top of the sidebar (as Settings does) can serve better than auto-selecting the first row.
-- The split view can reset the selection to `nil` when it expands: re-fill the selection on regular width, and clear regular-only selections (such as the overview) on collapse so compact width returns to the list.
-- Use a `NavigationStack` inside the detail column for deeper pushes.
-- In Xcode 27.1, a selectable `List` rendered `Link` and `Button` rows in the primary color instead of the tint.
+- Keep the sidebar visible with `columnVisibility` `.all` plus `toolbar(removing: .sidebarToggle)` when hiding the list would strand the user.
+- Use `navigationSplitViewColumnWidth(min:ideal:)` if sidebar cards or buttons wrap at the default width. Avoid `max:`: in a fold-aligned pose the system can widen the sidebar to the fold, and a maximum caps it short.
+- Consider choosing the default detail by importance, not position. When pushed pages are secondary, a regular-width-only overview page selected from a summary row atop the sidebar (as in Settings) can beat auto-selecting the first row.
+- The split view can reset selection to `nil` on expand: re-fill it on regular width, and clear regular-only selections on collapse so compact width returns to the list.
+- Use a `NavigationStack` in the detail column for deeper pushes.
+- In Xcode 27.1, a selectable `List` rendered `Link` and `Button` rows in the primary color rather than the tint.
 
 ## Inspector
 

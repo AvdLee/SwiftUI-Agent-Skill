@@ -121,73 +121,13 @@ Vertical toolbar behavior, including `toolbarVerticalEdge`, belongs in [toolbar-
 
 ## Two-Column Reflow for Card Screens
 
-Apple's iPhone Duo design guidance says not to just stretch the compact layout: reflow stacked content into two columns when width allows ([HIG](https://developer.apple.com/design/human-interface-guidelines/designing-for-iphone-duo)). A custom `Layout` with a `LayoutValueKey` for column assignment fits a scrolling dashboard of differently sized cards. Swap it with `VStackLayout` through `AnyLayout` so children keep identity and `@State` across size changes.
+Apple's iPhone Duo guidance says not to just stretch the compact layout: reflow stacked content into two columns when width allows ([HIG](https://developer.apple.com/design/human-interface-guidelines/designing-for-iphone-duo)). For a scrolling card screen, write a custom `Layout` that reads each child's column from a `LayoutValueKey` (set through a small `.column(_:)` modifier). Children without a column span the full width.
 
-```swift
-nonisolated struct ColumnKey: LayoutValueKey {
-    static let defaultValue: Int? = nil
-}
-
-extension View {
-    func column(_ index: Int) -> some View { layoutValue(key: ColumnKey.self, value: index) }
-}
-
-/// `.column(0)` / `.column(1)` children stack in two columns; unassigned children span the full width below.
-struct TwoColumnLayout: Layout {
-    var spacing: CGFloat = 20   // between cards in a column
-    var gutter: CGFloat = 20    // between the columns
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let width = proposal.width ?? 0
-        return CGSize(width: width, height: arrange(width: width, subviews: subviews).height)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let frames = arrange(width: bounds.width, subviews: subviews).frames
-        for (subview, frame) in zip(subviews, frames) {
-            subview.place(at: CGPoint(x: bounds.minX + frame.minX, y: bounds.minY + frame.minY),
-                          proposal: ProposedViewSize(frame.size))
-        }
-    }
-
-    nonisolated private func arrange(width: CGFloat, subviews: Subviews) -> (frames: [CGRect], height: CGFloat) {
-        let columnWidth = max((width - gutter) / 2, 0)
-        var columnY = [CGFloat](repeating: 0, count: 2)
-        var frames = [CGRect](repeating: .zero, count: subviews.count)
-        for (index, subview) in subviews.enumerated() {
-            guard let column = subview[ColumnKey.self], (0..<2).contains(column) else { continue }
-            let height = subview.sizeThatFits(ProposedViewSize(width: columnWidth, height: nil)).height
-            frames[index] = CGRect(x: CGFloat(column) * (columnWidth + gutter), y: columnY[column],
-                                   width: columnWidth, height: height)
-            columnY[column] += height + spacing
-        }
-        var y = columnY.max() ?? 0
-        for (index, subview) in subviews.enumerated() where subview[ColumnKey.self] == nil {
-            let height = subview.sizeThatFits(ProposedViewSize(width: width, height: nil)).height
-            frames[index] = CGRect(x: 0, y: y, width: width, height: height)
-            y += height + spacing
-        }
-        return (frames, max(y - spacing, 0))
-    }
-}
-
-// In the screen's body, inside the ScrollView:
-let usesColumns = horizontalSizeClass == .regular && !dynamicTypeSize.isAccessibilitySize
-let layout = usesColumns ? AnyLayout(TwoColumnLayout()) : AnyLayout(VStackLayout(spacing: 20))
-
-layout {
-    StorageCard().column(0)
-    CleanupCard().column(1)
-    RecentCard().column(0)
-    FooterNote()   // unassigned: full width
-}
-```
-
-- The `AnyLayout` swap is only needed when the children own state. An `if`/`else` between `HStack` and `VStack` recreates them and drops that state on every resize; when state lives above the cards, a plain branch is fine and keeps a compact `LazyVStack`.
-- For uniform cards, a row-major grid that proposes the row's tallest height to both cells avoids ragged card bottoms. The card surface must accept the taller proposal (`frame(maxHeight: .infinity)` before the background); make that opt-in so other uses keep their size.
-- Keep reading and VoiceOver order equal to the single-column order, and keep accessibility Dynamic Type sizes in a single column.
-- Each column is narrower than the compact screen, so grids nested inside a column may need fewer columns to avoid truncating titles.
-- To keep a fold out of the gutter, size `gutter` from a `.division` region as shown in [Reserved Regions](#reserved-regions-ios-271).
+- Choose between the custom layout and `VStackLayout` through `AnyLayout` (see [Adaptive and Resizable Interfaces](#adaptive-and-resizable-interfaces)) when the cards own `@State`, so it survives resizing. A plain branch recreates the cards but is fine when state lives above them, and keeps a compact `LazyVStack`.
+- For differently sized cards, assign columns explicitly (masonry). For uniform cards, use a row-major grid that proposes the row's tallest height to both cells; the card surface must accept it (`frame(maxHeight: .infinity)` before the background), opt-in.
+- Keep reading and VoiceOver order equal to the single-column order, and keep accessibility Dynamic Type sizes in one column.
+- Each column is narrower than the compact screen; grids nested inside may need fewer columns.
+- With default `MainActor` isolation, `LayoutValueKey` types and helpers called from `Layout` methods need `nonisolated` if the compiler reports isolated-conformance errors.
 
 ## Two-Region Arrangements (iOS 27.1+)
 
@@ -231,14 +171,9 @@ Treat these nesting combinations conservatively in the Xcode 27.1 beta:
 
 An arrangement supplies layout, not navigation infrastructure. Keep it inside a `NavigationStack` when the arranged content needs stack navigation. Each region handles its own scrolling.
 
-Apple's guidance is to favor small adjustments over rearrangement as the space changes. Switching between an arrangement and a different layout rebuilds the regions and drops their state (playback, slider position). If a screen uses an arrangement on the flat inner display, consider keeping it in one branch selected by size classes (regular width and height) and varying only the split axis, for example from aspect ratio. State that must survive should live above the branch between the regular and arranged layouts. Use accessibility sort priorities when the arranged visual order differs from the logical order.
+Apple favors small adjustments over rearrangement. Switching between an arrangement and a different layout rebuilds the regions and drops state such as playback or slider position, so consider keeping one arranged branch on the flat inner display (chosen by size classes) and varying only the split axis, with state that must survive owned above the branch. Use accessibility sort priorities when the arranged visual order differs from the logical order.
 
-Tuning APIs (iOS 27.1+), applied to a region's content:
-
-- `splitArrangementLayoutRatio(_:)` and `splitArrangementLayoutRatio(minHorizontal:idealHorizontal:maxHorizontal:minVertical:idealVertical:maxVertical:)` set the region's share of the split.
-- `splitArrangementLayoutSize(minWidth:idealWidth:maxWidth:minHeight:idealHeight:maxHeight:)` and `splitArrangementFixedLayoutSize(horizontal:vertical:)` size a region explicitly.
-- `@Environment(\.splitArrangementAxis)` (`Axis?`) reads the axis the split is using.
-- For `.overlay`, `overlayArrangementEdge(_:)` chooses the edge, and `@Environment(\.overlayArrangementZIndex)` reads the overlay's z-index.
+Tuning modifiers (iOS 27.1+): `splitArrangementLayoutRatio`, `splitArrangementLayoutSize`, `splitArrangementFixedLayoutSize`, and `overlayArrangementEdge`; read `@Environment(\.splitArrangementAxis)` and `@Environment(\.overlayArrangementZIndex)` for the current axis and z-index.
 
 ## Reserved Regions (iOS 27.1+)
 
@@ -258,7 +193,7 @@ GeometryReader { proxy in
 
 A `.division` region separates the view's bounds into usable areas; use it to move or resize a coherent element into one area rather than spanning the divider. An `.occlusion` region covers a smaller frame within the bounds; keep important visible or interactive content out of that frame. Each `ReservedRegion` also exposes `margins` and `isActive`.
 
-Apple's documentation disagrees on whether a default query includes inactive regions: the method discussion says it returns regions regardless of activity, while `.includeInactive` implies active-only. Do not rely on the default; filter on `isActive` before displacing content. Pass `options: .includeInactive` when a decision needs to know a region exists while inactive:
+Apple's documentation disagrees on whether a default query includes inactive regions, so do not rely on it: filter on `isActive` before displacing content, and pass `options: .includeInactive` when a decision needs to know a region exists while inactive:
 
 ```swift
 let possibleDivisions = proxy.reservedRegions(
@@ -271,36 +206,11 @@ Do not treat an inactive region as a current obstruction; inspect `isActive` bef
 
 ### Sizing a custom layout around a fold
 
-To place a gutter over a fold in a custom layout such as the [two-column reflow](#two-column-reflow-for-card-screens), read the region with `onGeometryChange` on the laid-out view so the frame shares that view's coordinate space:
+To put a gutter over a fold (for example in the [two-column reflow](#two-column-reflow-for-card-screens)), call `onGeometryChange` on the laid-out view, so the region frame shares its coordinate space, and store the result in `@State`. The transform closure is `@Sendable` and must return `Equatable & Sendable` values (`nonisolated` under default `MainActor` isolation).
 
-```swift
-@available(iOS 27.1, *)
-struct FoldAwareColumns<Content: View>: View {
-    @State private var fold = Fold.none
-    @ViewBuilder var content: Content
-
-    var body: some View {
-        // Assumes a roughly centered fold; an inactive or zero-sized frame keeps the regular gutter.
-        TwoColumnLayout(gutter: fold.isActive ? max(fold.frame.width, 20) : 20) { content }
-            .onGeometryChange(for: Fold.self) { proxy in
-                let regions = proxy.reservedRegions(kind: .division, options: .includeInactive)
-                guard let region = regions.first(where: { $0.frame.height > $0.frame.width }) else { return .none }
-                return Fold(frame: region.frame, isActive: region.isActive)
-            } action: { fold = $0 }
-    }
-}
-
-nonisolated struct Fold: Equatable, Sendable {
-    var frame: CGRect
-    var isActive: Bool
-    static let none = Fold(frame: .zero, isActive: false)
-}
-```
-
-- Keep only vertical divisions (`height > width`) for column layouts; a horizontal fold running through scrolling content needs no displacement.
-- Include inactive regions so columns don't jump while folding, and fall back to an even split when the inactive frame is zero-sized. Widen the gutter only while `isActive`.
-- Grids: Apple prefers an even column count whenever a division exists, even an inactive one, so folding doesn't change the count. While the fold is active, size each side separately because margins can be asymmetric, and let the last leading column's spacing cover the fold.
-- With default `MainActor` isolation, `LayoutValueKey` types, helpers called from `Layout` methods, and values returned from `onGeometryChange` transforms (which must be `Equatable` and `Sendable`) need `nonisolated` when the compiler reports isolated-conformance errors.
+- Keep only vertical divisions (`height > width`) for column layouts; a horizontal fold through scrolling content needs no displacement.
+- Query with `.includeInactive` so columns don't jump while folding, fall back to an even split for a zero-sized frame, and widen the gutter only while `isActive`.
+- Grids: Apple prefers an even column count whenever a division exists, even an inactive one. While the fold is active, size each side separately (margins can be asymmetric) and let the last leading column's spacing cover the fold.
 
 The query's `layoutDirectionBehavior` defaults to `.mirrors`, so directional geometry follows right-to-left layout. Preserve that default for interface content. Override it only when coordinates intentionally represent physical hardware placement rather than leading/trailing UI, and keep the reason explicit.
 
