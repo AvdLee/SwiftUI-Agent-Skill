@@ -10,15 +10,23 @@ Opening, closing, rotating, partially folding, Split View multitasking, and pinn
 
 Hardware placement is asymmetric. The outer and inner cameras occupy different positions, and system controls can use a vertical bar on a hardware-aligned side. Never assume opposite safe-area or margin values are equal. Let standard SwiftUI containers and directional safe areas place foreground controls; full-bleed visual backgrounds can extend behind them. See [toolbar-patterns.md](toolbar-patterns.md) for vertical-bar APIs.
 
+## Choose the Technique by Screen Structure
+
+Classify the screen by its structure before choosing any fold technique; reaching for `ArrangementView` or `reservedRegions` first tends to misread the screen. Check in this order:
+
+1. **Rows push further screens** (settings, mailboxes, folders; even a short list): `NavigationSplitView`. It collapses on compact width, splits evenly along a fold, and scales to iPad and resizable windows with no Duo-specific code. A screen whose rows are `NavigationLink`s is this case. Details in [sheet-navigation-patterns.md](sheet-navigation-patterns.md#large-displays).
+2. **Cards or a feed in one `ScrollView`** (dashboards, collection grids): reflow into two columns with a custom `Layout`, with the gutter over a vertical fold. Do not split at a horizontal fold. See [two-column reflow](layout-best-practices.md#two-column-reflow-for-card-screens).
+3. **Two peer regions without navigation** (media and controls, visual and copy): `ArrangementView` with `.split`, outside any scroll view.
+4. **Content plus a supplementary queue or panel**: consider the compact pattern, a persistent bar that pushes the full view (like the Music mini player), instead of a side column. If `.inspector` is used, attach it around the `NavigationStack`, not to a pushed screen; in Xcode 27.1, an inspector on a pushed screen that hosted its own `NavigationStack` broke pushes, and full-bleed content laid out underneath the inspector column.
+5. **Custom edge-to-edge chrome only**: read `reservedRegions` directly.
+
+In a portrait-only iPhone app, regular width effectively means the inner display, and the inner display ignores supported orientations, so it can still be landscape.
+
 ## Fold and Camera Regions
 
 The outer camera always shapes the outer-display area; standard safe areas and bars account for it. On the inner display, an active fold is represented as a `.division` reserved region because it separates the available area. The active FaceTime camera is an `.occlusion` region because it covers a smaller frame. Inner regions can change activity as the device pose and camera use change.
 
-Start with `NavigationStack`, `NavigationSplitView`, `TabView`, sheets, alerts, menus, `List`, and `ScrollView`; these system components already adapt around the fold and system UI. Use the generic [`ArrangementView` and reserved-region techniques](layout-best-practices.md#two-region-arrangements-ios-271) only when Duo exposes a real problem in custom UI:
-
-- Replace an existing custom two-region split or overlay with `ArrangementView` when its content relationship fits those generic styles.
-- Query division or occlusion regions for a high-priority manually laid-out control or edge-to-edge custom interface that system containers cannot place.
-- Do not displace continuously scrolling articles, feeds, documents, or lists merely because a fold exists; scrolling already preserves continuity.
+System components (`NavigationStack`, `NavigationSplitView`, `TabView`, sheets, alerts, menus, `List`, `ScrollView`) already adapt around the fold and system UI. Do not displace continuously scrolling articles, feeds, documents, or lists merely because a fold exists; scrolling already preserves continuity. Pick the technique with the structure list above, then see [`ArrangementView`](layout-best-practices.md#two-region-arrangements-ios-271) and [reserved-region](layout-best-practices.md#reserved-regions-ios-271) details.
 
 ## Duo Displacement Heuristics
 
@@ -55,6 +63,10 @@ Select this view behind `#available(iOS 27.1, *)`; the fallback omits the option
 ## Scene Accessories
 
 Scene accessories can pair supplementary content with the main scene on another display, but the system controls their availability and it can change at runtime. Keep enablement state synchronized with `onAvailabilityChange`, disable unavailable controls, and handle failed scene requests rather than inferring availability from pose. For camera accessories, register the accessory with the relevant camera view, but defer capture session, camera selection, preview, and rotation behavior to AVFoundation guidance.
+
+## Verifying Layouts
+
+Simulator command-line tools cannot fold the device, rotate the inner display, or set the hinge angle, and coordinate taps can miss the inner display. Do not spend iterations scripting poses: iterate on layout in Xcode Previews where possible, add a debug entry point that opens the screen under test, and ask the user to confirm folded and landscape poses in a simulator they have already posed.
 
 ## Official Sources
 
