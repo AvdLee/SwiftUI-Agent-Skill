@@ -14,13 +14,13 @@ Hardware placement is asymmetric. The outer and inner cameras occupy different p
 
 Classify the screen by its structure before choosing any fold technique; reaching for `ArrangementView` or `reservedRegions` first tends to misread the screen. Check in this order:
 
-1. **Rows push further screens** (settings, mailboxes, folders; even a short list): `NavigationSplitView`. It collapses on compact width, splits evenly along a fold, and scales to iPad and resizable windows with no Duo-specific code. A screen whose rows are `NavigationLink`s is this case. Details in [sheet-navigation-patterns.md](sheet-navigation-patterns.md#large-displays).
+1. **Rows push further screens** (settings, mailboxes, folders; even a short list; rows that are `NavigationLink`s on compact width): `NavigationSplitView`. It collapses on compact width, can split along a fold, and scales to iPad and resizable windows with no Duo-specific code. Details in [sheet-navigation-patterns.md](sheet-navigation-patterns.md#large-displays).
 2. **Cards or a feed in one `ScrollView`** (dashboards, collection grids): reflow into two columns with a custom `Layout`, with the gutter over a vertical fold. Do not split at a horizontal fold. See [two-column reflow](layout-best-practices.md#two-column-reflow-for-card-screens).
 3. **Two peer regions without navigation** (media and controls, visual and copy): `ArrangementView` with `.split`, outside any scroll view.
 4. **Content plus a supplementary queue or panel**: consider the compact pattern, a persistent bar that pushes the full view (like the Music mini player), instead of a side column. If `.inspector` is used, attach it around the `NavigationStack`, not to a pushed screen; in Xcode 27.1, an inspector on a pushed screen that hosted its own `NavigationStack` broke pushes, and full-bleed content laid out underneath the inspector column.
 5. **Custom edge-to-edge chrome only**: read `reservedRegions` directly.
 
-In a portrait-only iPhone app, regular width effectively means the inner display, and the inner display ignores supported orientations, so it can still be landscape.
+In a portrait-only iPhone app, regular width effectively means the inner display; on iPhone Duo the inner display ignores the app's supported orientations, so it can still be landscape.
 
 ## Fold and Camera Regions
 
@@ -66,7 +66,7 @@ Scene accessories can pair supplementary content with the main scene on another 
 
 ## Verifying Layouts
 
-Simulator command-line tools cannot fold the device, rotate the inner display, or set the hinge angle, and coordinate taps can miss the inner display. Do not spend iterations scripting poses: iterate on layout in Xcode Previews where possible, add a debug entry point that opens the screen under test, and ask the user to confirm folded and landscape poses in a simulator they have already posed.
+Scripted simulator tools cannot fold the device, rotate the inner display, or set the hinge angle, so don't spend iterations automating poses. Iterate on layout in Xcode Previews where possible and ask the user to confirm folded and landscape poses.
 
 ## Official Sources
 

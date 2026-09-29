@@ -105,8 +105,7 @@ Consult the reference file for each topic relevant to the current task:
 | Lists and ForEach | `references/list-patterns.md` |
 | Resizable layout, safe areas, two-column reflow, foldable grids, arrangements, and reserved regions | `references/layout-best-practices.md` |
 | iPhone Duo, foldable, or large-display screens (read first to choose the technique) | `references/iphone-duo.md` |
-| `NavigationSplitView` on large displays | `references/sheet-navigation-patterns.md` |
-| Sheets and navigation | `references/sheet-navigation-patterns.md` |
+| Sheets, navigation, and `NavigationSplitView` on large displays | `references/sheet-navigation-patterns.md` |
 | ScrollView, scroll position, and scroll geometry | `references/scroll-patterns.md` |
 | Focus management | `references/focus-patterns.md` |
 | Animations (basics) | `references/animation-basics.md` |

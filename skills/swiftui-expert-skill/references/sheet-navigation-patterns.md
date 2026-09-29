@@ -274,7 +274,7 @@ Do not infer split-view behavior from the device family. Respond to the space Sw
 
 ### Large Displays
 
-A screen whose rows push further screens (settings, mailboxes, folders) can use `NavigationSplitView` on every size: it collapses on compact width and shows the next hierarchy level beside the list on large displays, including a fold, without device-specific code.
+For a screen whose rows push further screens (settings, mailboxes, folders), `NavigationSplitView` shows the next hierarchy level beside the list on large displays and collapses on compact width (see [the screen-structure rule](iphone-duo.md#choose-the-technique-by-screen-structure)). Useful configuration:
 
 ```swift
 struct SettingsRoot: View {
@@ -299,10 +299,10 @@ struct SettingsRoot: View {
 
 - Keep the sidebar visible with `columnVisibility` set to `.all` and `toolbar(removing: .sidebarToggle)` when hiding the list would strand the user.
 - Use `navigationSplitViewColumnWidth(min:ideal:)` when the sidebar holds cards or buttons that wrap at the default width. Avoid `max:`: in a fold-aligned pose the system can widen the sidebar to meet the fold, and a maximum caps it short.
-- Consider choosing the default detail by importance rather than position. When the pushed pages are secondary, promote the screen's main content into a regular-width-only overview page, selected from a summary row at the top of the sidebar (as Settings does with the Apple Account row), instead of auto-selecting the first row.
+- Consider choosing the default detail by importance rather than position. When the pushed pages are secondary, a regular-width-only overview page selected from a summary row at the top of the sidebar (as Settings does) can serve better than auto-selecting the first row.
 - The split view can reset the selection to `nil` when it expands: re-fill the selection on regular width, and clear regular-only selections (such as the overview) on collapse so compact width returns to the list.
 - Use a `NavigationStack` inside the detail column for deeper pushes.
-- A selectable `List` renders `Link` and `Button` rows in the primary color instead of the tint. Use rows with a leading icon (as Settings does) rather than fighting it with explicit tinting.
+- In Xcode 27.1, a selectable `List` rendered `Link` and `Button` rows in the primary color instead of the tint.
 
 ## Inspector
 

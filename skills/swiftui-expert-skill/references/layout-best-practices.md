@@ -121,7 +121,7 @@ Vertical toolbar behavior, including `toolbarVerticalEdge`, belongs in [toolbar-
 
 ## Two-Column Reflow for Card Screens
 
-Apple's main advice for a large display is not to stretch the compact layout: reflow stacked cards into two columns when width allows. A custom `Layout` with a `LayoutValueKey` for column assignment fits a scrolling dashboard of differently sized cards. Swap it with `VStackLayout` through `AnyLayout` so children keep identity and `@State` across size changes.
+Apple's iPhone Duo design guidance says not to just stretch the compact layout: reflow stacked content into two columns when width allows ([HIG](https://developer.apple.com/design/human-interface-guidelines/designing-for-iphone-duo)). A custom `Layout` with a `LayoutValueKey` for column assignment fits a scrolling dashboard of differently sized cards. Swap it with `VStackLayout` through `AnyLayout` so children keep identity and `@State` across size changes.
 
 ```swift
 nonisolated struct ColumnKey: LayoutValueKey {
@@ -134,7 +134,8 @@ extension View {
 
 /// `.column(0)` / `.column(1)` children stack in two columns; unassigned children span the full width below.
 struct TwoColumnLayout: Layout {
-    var spacing: CGFloat = 20
+    var spacing: CGFloat = 20   // between cards in a column
+    var gutter: CGFloat = 20    // between the columns
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let width = proposal.width ?? 0
@@ -150,13 +151,13 @@ struct TwoColumnLayout: Layout {
     }
 
     nonisolated private func arrange(width: CGFloat, subviews: Subviews) -> (frames: [CGRect], height: CGFloat) {
-        let columnWidth = max((width - spacing) / 2, 0)
+        let columnWidth = max((width - gutter) / 2, 0)
         var columnY = [CGFloat](repeating: 0, count: 2)
         var frames = [CGRect](repeating: .zero, count: subviews.count)
         for (index, subview) in subviews.enumerated() {
             guard let column = subview[ColumnKey.self], (0..<2).contains(column) else { continue }
             let height = subview.sizeThatFits(ProposedViewSize(width: columnWidth, height: nil)).height
-            frames[index] = CGRect(x: CGFloat(column) * (columnWidth + spacing), y: columnY[column],
+            frames[index] = CGRect(x: CGFloat(column) * (columnWidth + gutter), y: columnY[column],
                                    width: columnWidth, height: height)
             columnY[column] += height + spacing
         }
@@ -170,23 +171,15 @@ struct TwoColumnLayout: Layout {
     }
 }
 
-struct Dashboard: View {
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+// In the screen's body, inside the ScrollView:
+let usesColumns = horizontalSizeClass == .regular && !dynamicTypeSize.isAccessibilitySize
+let layout = usesColumns ? AnyLayout(TwoColumnLayout()) : AnyLayout(VStackLayout(spacing: 20))
 
-    var body: some View {
-        let usesColumns = horizontalSizeClass == .regular && !dynamicTypeSize.isAccessibilitySize
-        let layout = usesColumns ? AnyLayout(TwoColumnLayout()) : AnyLayout(VStackLayout(spacing: 20))
-
-        ScrollView {
-            layout {
-                StorageCard().column(0)
-                CleanupCard().column(1)
-                RecentCard().column(0)
-                FooterNote()
-            }
-        }
-    }
+layout {
+    StorageCard().column(0)
+    CleanupCard().column(1)
+    RecentCard().column(0)
+    FooterNote()   // unassigned: full width
 }
 ```
 
@@ -194,7 +187,7 @@ struct Dashboard: View {
 - For uniform cards, a row-major grid that proposes the row's tallest height to both cells avoids ragged card bottoms. The card surface must accept the taller proposal (`frame(maxHeight: .infinity)` before the background); make that opt-in so other uses keep their size.
 - Keep reading and VoiceOver order equal to the single-column order, and keep accessibility Dynamic Type sizes in a single column.
 - Each column is narrower than the compact screen, so grids nested inside a column may need fewer columns to avoid truncating titles.
-- To keep a fold out of the gutter, size the gutter from a `.division` region as described in [Reserved Regions](#reserved-regions-ios-271).
+- To keep a fold out of the gutter, size `gutter` from a `.division` region as shown in [Reserved Regions](#reserved-regions-ios-271).
 
 ## Two-Region Arrangements (iOS 27.1+)
 
@@ -238,7 +231,7 @@ Treat these nesting combinations conservatively in the Xcode 27.1 beta:
 
 An arrangement supplies layout, not navigation infrastructure. Keep it inside a `NavigationStack` when the arranged content needs stack navigation. Each region handles its own scrolling.
 
-Favor small adjustments over rearrangement as the space changes. If a screen uses an arrangement on the flat inner display, keep it in one branch selected by size classes (regular width and height) and vary only the split axis, for example from aspect ratio. Resizing then keeps the regions and their state, such as playback or slider position, instead of rebuilding them. Own interaction state above the branch between the regular and arranged layouts, and use accessibility sort priorities when the arranged visual order differs from the logical order.
+Apple's guidance is to favor small adjustments over rearrangement as the space changes. Switching between an arrangement and a different layout rebuilds the regions and drops their state (playback, slider position). If a screen uses an arrangement on the flat inner display, consider keeping it in one branch selected by size classes (regular width and height) and varying only the split axis, for example from aspect ratio. State that must survive should live above the branch between the regular and arranged layouts. Use accessibility sort priorities when the arranged visual order differs from the logical order.
 
 Tuning APIs (iOS 27.1+), applied to a region's content:
 
@@ -265,7 +258,7 @@ GeometryReader { proxy in
 
 A `.division` region separates the view's bounds into usable areas; use it to move or resize a coherent element into one area rather than spanning the divider. An `.occlusion` region covers a smaller frame within the bounds; keep important visible or interactive content out of that frame. Each `ReservedRegion` also exposes `margins` and `isActive`.
 
-Apple's documentation disagrees on whether a default query includes inactive regions: the method discussion says it returns regions regardless of activity, while `.includeInactive` implies active-only. Do not rely on the default; always filter on `isActive`. Pass `options: .includeInactive` when a decision needs to know a region exists while inactive:
+Apple's documentation disagrees on whether a default query includes inactive regions: the method discussion says it returns regions regardless of activity, while `.includeInactive` implies active-only. Do not rely on the default; filter on `isActive` before displacing content. Pass `options: .includeInactive` when a decision needs to know a region exists while inactive:
 
 ```swift
 let possibleDivisions = proxy.reservedRegions(
@@ -282,11 +275,13 @@ To place a gutter over a fold in a custom layout such as the [two-column reflow]
 
 ```swift
 @available(iOS 27.1, *)
-struct FoldReader: View {
+struct FoldAwareColumns<Content: View>: View {
     @State private var fold = Fold.none
+    @ViewBuilder var content: Content
 
     var body: some View {
-        Color.clear
+        // Assumes a roughly centered fold; an inactive or zero-sized frame keeps the regular gutter.
+        TwoColumnLayout(gutter: fold.isActive ? max(fold.frame.width, 20) : 20) { content }
             .onGeometryChange(for: Fold.self) { proxy in
                 let regions = proxy.reservedRegions(kind: .division, options: .includeInactive)
                 guard let region = regions.first(where: { $0.frame.height > $0.frame.width }) else { return .none }
@@ -304,7 +299,7 @@ nonisolated struct Fold: Equatable, Sendable {
 
 - Keep only vertical divisions (`height > width`) for column layouts; a horizontal fold running through scrolling content needs no displacement.
 - Include inactive regions so columns don't jump while folding, and fall back to an even split when the inactive frame is zero-sized. Widen the gutter only while `isActive`.
-- Grids: use an even column count whenever a division exists, even an inactive one, so folding doesn't change the count. While the fold is active, size each side separately because the vertical toolbar makes margins asymmetric, and let the last leading column's spacing cover the fold.
+- Grids: Apple prefers an even column count whenever a division exists, even an inactive one, so folding doesn't change the count. While the fold is active, size each side separately because margins can be asymmetric, and let the last leading column's spacing cover the fold.
 - With default `MainActor` isolation, `LayoutValueKey` types, helpers called from `Layout` methods, and values returned from `onGeometryChange` transforms (which must be `Equatable` and `Sendable`) need `nonisolated` when the compiler reports isolated-conformance errors.
 
 The query's `layoutDirectionBehavior` defaults to `.mirrors`, so directional geometry follows right-to-left layout. Preserve that default for interface content. Override it only when coordinates intentionally represent physical hardware placement rather than leading/trailing UI, and keep the reason explicit.
