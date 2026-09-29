@@ -272,6 +272,17 @@ struct ContentView: View {
 
 Do not infer split-view behavior from the device family. Respond to the space SwiftUI offers: an iPhone can provide a regular-width context, including the inner display of iPhone Duo, where `NavigationSplitView` can show multiple columns. The same scene can later become compact and collapse, so keep selection and navigation state consistent through the transition.
 
+### Large Displays
+
+When rows push further screens (settings, mailboxes, folders), `NavigationSplitView` shows the next level beside the list on large displays and collapses on compact width; see [the screen-structure rule](iphone-duo.md#choose-the-technique-by-screen-structure).
+
+- Keep the sidebar visible with `columnVisibility` `.all` plus `toolbar(removing: .sidebarToggle)` when hiding the list would strand the user.
+- Use `navigationSplitViewColumnWidth(min:ideal:)` if sidebar cards or buttons wrap at the default width. Avoid `max:`: in a fold-aligned pose the system can widen the sidebar to the fold, and a maximum caps it short.
+- Consider choosing the default detail by importance, not position. When pushed pages are secondary, a regular-width-only overview page selected from a summary row atop the sidebar (as in Settings) can beat auto-selecting the first row.
+- The split view can reset selection to `nil` on expand: re-fill it on regular width, and clear regular-only selections on collapse so compact width returns to the list.
+- Use a `NavigationStack` in the detail column for deeper pushes.
+- In Xcode 27.1, a selectable `List` rendered `Link` and `Button` rows in the primary color rather than the tint.
+
 ## Inspector
 
 > **Availability:** iOS 17.0+, macOS 14.0+

@@ -35,7 +35,9 @@ This document provides guidance for AI agents working with this skill to ensure 
 The skill includes focused Instruments tooling for SwiftUI performance work.
 Tool-specific instructions are allowed only when they directly support the
 bundled trace recording and analysis workflows. Do not add unrelated IDE,
-debugging, build-system, or general command-line guidance.
+debugging, build-system, or general command-line guidance. The one other exception
+is a brief mention of the RocketSim CLI for posing the iPhone Duo simulator when
+verifying layouts (`references/iphone-duo.md`).
 
 Agents using the trace tooling must:
 - Prefer app-scoped `--attach` or `--launch` recordings.

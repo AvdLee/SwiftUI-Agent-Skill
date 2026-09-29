@@ -6,6 +6,7 @@
 - [Context-Agnostic Views](#context-agnostic-views)
 - [Adaptive and Resizable Interfaces](#adaptive-and-resizable-interfaces)
 - [Adaptive Safe Areas](#adaptive-safe-areas)
+- [Two-Column Reflow for Card Screens](#two-column-reflow-for-card-screens)
 - [Two-Region Arrangements (iOS 27.1+)](#two-region-arrangements-ios-271)
 - [Reserved Regions (iOS 27.1+)](#reserved-regions-ios-271)
 - [Own Your Container](#own-your-container)
@@ -118,6 +119,16 @@ Avoid `GeometryReader` whose only purpose is to read and reapply safe-area inset
 
 Vertical toolbar behavior, including `toolbarVerticalEdge`, belongs in [toolbar-patterns.md](toolbar-patterns.md).
 
+## Two-Column Reflow for Card Screens
+
+Apple's iPhone Duo guidance says not to just stretch the compact layout: reflow stacked content into two columns when width allows ([HIG](https://developer.apple.com/design/human-interface-guidelines/designing-for-iphone-duo)). For a scrolling card screen, write a custom `Layout` that reads each child's column from a `LayoutValueKey` (set through a small `.column(_:)` modifier). Children without a column span the full width.
+
+- Choose between the custom layout and `VStackLayout` through `AnyLayout` (see [Adaptive and Resizable Interfaces](#adaptive-and-resizable-interfaces)) when the cards own `@State`, so it survives resizing. A plain branch recreates the cards but is fine when state lives above them, and keeps a compact `LazyVStack`.
+- For differently sized cards, assign columns explicitly (masonry). For uniform cards, use a row-major grid that proposes the row's tallest height to both cells; the card surface must accept it (`frame(maxHeight: .infinity)` before the background), opt-in.
+- Keep reading and VoiceOver order equal to the single-column order, and keep accessibility Dynamic Type sizes in one column.
+- Each column is narrower than the compact screen; grids nested inside may need fewer columns.
+- With default `MainActor` isolation, `LayoutValueKey` types and helpers called from `Layout` methods need `nonisolated` if the compiler reports isolated-conformance errors.
+
 ## Two-Region Arrangements (iOS 27.1+)
 
 `ArrangementView` is a layout container for a primary and secondary view. Prefer the system's adaptive navigation and presentation containers when they already express the interface. Use an arrangement for an existing custom two-region layout that would otherwise be an `HStack`/`VStack` or `ZStack`:
@@ -158,7 +169,11 @@ Treat these nesting combinations conservatively in the Xcode 27.1 beta:
 - Do not put `NavigationSplitView` inside `ArrangementView`, or `ArrangementView` inside `NavigationSplitView`.
 - Do not put `ArrangementView` inside `List` or `ScrollView`.
 
-An arrangement supplies layout, not navigation infrastructure. Keep it inside a `NavigationStack` when the arranged content needs stack navigation.
+An arrangement supplies layout, not navigation infrastructure. Keep it inside a `NavigationStack` when the arranged content needs stack navigation. Each region handles its own scrolling.
+
+Apple favors small adjustments over rearrangement. Switching between an arrangement and a different layout rebuilds the regions and drops state such as playback or slider position, so consider keeping one arranged branch on the flat inner display (chosen by size classes) and varying only the split axis, with state that must survive owned above the branch. Use accessibility sort priorities when the arranged visual order differs from the logical order.
+
+Tuning modifiers (iOS 27.1+): `splitArrangementLayoutRatio`, `splitArrangementLayoutSize`, `splitArrangementFixedLayoutSize`, and `overlayArrangementEdge`; read `@Environment(\.splitArrangementAxis)` and `@Environment(\.overlayArrangementZIndex)` for the current axis and z-index.
 
 ## Reserved Regions (iOS 27.1+)
 
@@ -178,7 +193,7 @@ GeometryReader { proxy in
 
 A `.division` region separates the view's bounds into usable areas; use it to move or resize a coherent element into one area rather than spanning the divider. An `.occlusion` region covers a smaller frame within the bounds; keep important visible or interactive content out of that frame. Each `ReservedRegion` also exposes `margins` and `isActive`.
 
-Queries return active regions by default. Add `options: .includeInactive` only for a deliberate high-level decision that needs to know a region exists while inactive:
+Apple's documentation disagrees on whether a default query includes inactive regions, so do not rely on it: filter on `isActive` before displacing content, and pass `options: .includeInactive` when a decision needs to know a region exists while inactive:
 
 ```swift
 let possibleDivisions = proxy.reservedRegions(
@@ -188,6 +203,14 @@ let possibleDivisions = proxy.reservedRegions(
 ```
 
 Do not treat an inactive region as a current obstruction; inspect `isActive` before displacement. Inactive division regions can have a zero-sized frame.
+
+### Sizing a custom layout around a fold
+
+To put a gutter over a fold (for example in the [two-column reflow](#two-column-reflow-for-card-screens)), call `onGeometryChange` on the laid-out view, so the region frame shares its coordinate space, and store the result in `@State`. The transform closure is `@Sendable` and must return `Equatable & Sendable` values (`nonisolated` under default `MainActor` isolation).
+
+- Keep only vertical divisions (`height > width`) for column layouts; a horizontal fold through scrolling content needs no displacement.
+- Query with `.includeInactive` so columns don't jump while folding, fall back to an even split for a zero-sized frame, and widen the gutter only while `isActive`.
+- Grids: Apple prefers an even column count whenever a division exists, even an inactive one. While the fold is active, size each side separately (margins can be asymmetric) and let the last leading column's spacing cover the fold.
 
 The query's `layoutDirectionBehavior` defaults to `.mirrors`, so directional geometry follows right-to-left layout. Preserve that default for interface content. Override it only when coordinates intentionally represent physical hardware placement rather than leading/trailing UI, and keep the reason explicit.
 

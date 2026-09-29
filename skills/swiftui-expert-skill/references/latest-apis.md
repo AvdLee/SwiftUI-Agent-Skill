@@ -516,7 +516,7 @@ Search this file's lookup table when migrating an API that the 27 SDK marks soft
 
 ## When Targeting iOS 27.1+
 
-- `ArrangementView`, `.split` / `.overlay`, and arrangement axis constraints provide adaptive two-region layout. See [`layout-best-practices.md`](layout-best-practices.md).
+- `ArrangementView`, `.split` / `.overlay`, and arrangement axis constraints provide adaptive two-region layout and tuning modifiers such as `splitArrangementLayoutRatio`. See [`layout-best-practices.md`](layout-best-practices.md).
 - `ReservedRegion` and `GeometryProxy.reservedRegions(kind:options:layoutDirectionBehavior:)` expose division and occlusion geometry for custom layouts. See [`layout-best-practices.md`](layout-best-practices.md).
 - `ToolbarContent.axisBehavior(_:)`, `toolbarVerticalEdge`, `toolbarVerticalCompressionBehavior(_:)`, and `toolbarVerticalBehavior(_:)` support adaptive vertical bars. See [`toolbar-patterns.md`](toolbar-patterns.md).
 - `onHingeChange` and the optional `DeviceHingeContext.hinge` support live effects and interactions, not layout decisions. For iPhone Duo-specific use, see [`iphone-duo.md`](iphone-duo.md).
