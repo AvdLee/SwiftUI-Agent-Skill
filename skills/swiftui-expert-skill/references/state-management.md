@@ -468,7 +468,7 @@ SwiftUI can't track changes through nested `ObservableObject` properties. Workar
 ## Key Principles
 
 1. **Always prefer `@Observable` over `ObservableObject`** for new code
-2. **Mark `@Observable` classes with `@MainActor` for thread safety (unless using default actor isolation)`**
+2. **Mark `@Observable` classes with `@MainActor` for thread safety (unless using default actor isolation)**
 3. Use `@State` with `@Observable` classes (not `@StateObject`)
 4. Use `@Bindable` for injected `@Observable` objects that need bindings
 5. **Always mark `@State` and `@StateObject` as `private`**
