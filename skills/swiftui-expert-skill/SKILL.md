@@ -1,6 +1,6 @@
 ---
 name: swiftui-expert-skill
-description: Use when writing, reviewing, or refactoring SwiftUI code for iOS or macOS, including state and `@Observable` data flow, view composition, resizable layouts, safe areas, display scale, performance, lists, environment, localization, animation, Liquid Glass, and API migration. Also use for iPhone Duo, foldable, or large-display layouts (`NavigationSplitView` on large displays, two-column reflow, foldable grids, `ArrangementView`, `ReservedRegion`), hinge effects, vertical bars, `@State` initialization or synthesized-property diagnostics, `@ContentBuilder` ambiguity, `reorderable` drag/drop, custom `AsyncImage` `URLSession`, swipe actions outside List, item-bound `alert`/`confirmationDialog`, `ToolbarOverflowMenu`, `AnimatableValues`, Document APIs (`Document`/`DocumentReader`), and Instruments `.trace` capture or analysis.
+description: Use when writing, reviewing, or refactoring SwiftUI code for iOS or macOS, including state and `@Observable` data flow, view composition, resizable layouts, safe areas, display scale, performance, lists, environment, localization, animation, Liquid Glass, and API migration. Also use for iPhone Duo, foldable, or large-display layouts (`NavigationSplitView` on large displays, iPhone tab sidebar, two-column reflow, foldable grids, `ArrangementView`, `ReservedRegion`), hinge effects, vertical bars, `@State` initialization or synthesized-property diagnostics, `@ContentBuilder` ambiguity, `reorderable` drag/drop, custom `AsyncImage` `URLSession`, swipe actions outside List, item-bound `alert`/`confirmationDialog`, `ToolbarOverflowMenu`, `AnimatableValues`, Document APIs (`Document`/`DocumentReader`), and Instruments `.trace` capture or analysis.
 ---
 
 # SwiftUI Expert Skill
@@ -105,7 +105,7 @@ Consult the reference file for each topic relevant to the current task:
 | Lists and ForEach | `references/list-patterns.md` |
 | Resizable layout, safe areas, two-column reflow, foldable grids, arrangements, and reserved regions | `references/layout-best-practices.md` |
 | iPhone Duo, foldable, or large-display screens (read first to choose the technique) | `references/iphone-duo.md` |
-| Sheets, navigation, and `NavigationSplitView` on large displays | `references/sheet-navigation-patterns.md` |
+| Sheets, navigation, `NavigationSplitView` on large displays, and tab bar/sidebar (`sidebarAdaptable`) | `references/sheet-navigation-patterns.md` |
 | ScrollView, scroll position, and scroll geometry | `references/scroll-patterns.md` |
 | Focus management | `references/focus-patterns.md` |
 | Animations (basics) | `references/animation-basics.md` |
