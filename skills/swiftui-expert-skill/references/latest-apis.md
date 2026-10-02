@@ -121,7 +121,7 @@ extension EnvironmentValues {
 
 ### Previews
 
-**Always use the `#Preview` macro instead of `PreviewProvider`.** The macro back-deploys. Pass layout with preview traits instead of `previewLayout(_:)`. Choose the device in the Xcode canvas instead of `previewDevice(_:)`.
+**Always use the `#Preview` macro instead of `PreviewProvider`.** The plain macro back-deploys. Layout traits such as `.sizeThatFitsLayout` and `.fixedLayout(width:height:)` require iOS 17+. Choose the device in the Xcode canvas instead of `previewDevice(_:)`.
 
 ```swift
 // Modern
@@ -129,6 +129,7 @@ extension EnvironmentValues {
     CircleImage()
 }
 
+// Modern (iOS 17+)
 #Preview(traits: .sizeThatFitsLayout) {
     CircleImage()
 }
@@ -586,8 +587,8 @@ These APIs are from the beta iOS 27.1 SDK. Gate runtime use with `#available(iOS
 | `alert(isPresented:content:)` | `alert(_:isPresented:actions:message:)` | iOS 15+ |
 | `alert(item:content:)` | `alert(_:isPresented:presenting:actions:message:)` | iOS 15+ |
 | `PreviewProvider` | `#Preview` | Back-deploys (Xcode 15+) |
-| `previewLayout(_:)` | `#Preview` traits such as `.sizeThatFitsLayout` or `.fixedLayout(width:height:)` | Back-deploys (Xcode 15+) |
-| `previewDevice(_:)` | Device picker in the Xcode preview canvas | Back-deploys (Xcode 15+) |
+| `previewLayout(_:)` | `#Preview` traits such as `.sizeThatFitsLayout` or `.fixedLayout(width:height:)` | iOS 17+ |
+| `previewDevice(_:)` | Device picker in the Xcode preview canvas | Xcode 15+ |
 | `autocapitalization(_:)` | `textInputAutocapitalization(_:)` | iOS 15+ |
 | `accessibility(label:)` etc. | `accessibilityLabel()` etc. | iOS 15+ |
 | `TextField` `onCommit`/`onEditingChanged` | `onSubmit` + `focused` | iOS 15+ |
