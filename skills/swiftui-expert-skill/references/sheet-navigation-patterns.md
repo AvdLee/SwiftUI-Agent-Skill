@@ -283,6 +283,26 @@ When rows push further screens (settings, mailboxes, folders), `NavigationSplitV
 - Use a `NavigationStack` in the detail column for deeper pushes.
 - In Xcode 27.1, a selectable `List` rendered `Link` and `Button` rows in the primary color rather than the tint.
 
+### Tab Bar and Sidebar (iOS 27+)
+
+On iPadOS, a `TabView` with `.tabViewStyle(.sidebarAdaptable)` morphs between a tab bar and a sidebar. On iPhone the bar cannot morph, so only one representation is shown. On iOS 27 an iPhone app can opt into the sidebar representation with `defaultTabBarPlacement(_:)`; on iPadOS the modifier has no effect and `defaultAdaptableTabBarPlacement(_:)` applies instead.
+
+```swift
+@available(iOS 27.0, *)
+struct RootTabs: View {
+    var body: some View {
+        TabView {
+            Tab("Home", systemImage: "house") { HomeView() }
+            Tab("Favorites", systemImage: "star") { FavoritesView() }
+        }
+        .tabViewStyle(.sidebarAdaptable)
+        .defaultTabBarPlacement(.sidebar)
+    }
+}
+```
+
+The system decides between tab bar and sidebar from the space available, and people cannot toggle it. Read `@Environment(\.isTabViewSidebarAvailable)` inside the tab content to learn whether a sidebar is (or can become) visible; it returns `false` outside a sidebar-capable `TabView`'s content. Use it rather than inspecting size classes for this question. When no sidebar is available, make sure content that lives behind nested tabs or sections stays reachable some other way. Keep a plain `TabView` fallback for earlier systems.
+
 ## Inspector
 
 > **Availability:** iOS 17.0+, macOS 14.0+
@@ -392,6 +412,7 @@ For older `alert` and `confirmationDialog` API patterns, see `latest-apis.md`. P
 - [ ] Use `NavigationStack` with `navigationDestination(for:)` for type-safe navigation
 - [ ] Use `NavigationPath` for programmatic navigation
 - [ ] Use `NavigationSplitView` for sidebar-driven multi-column layouts
+- [ ] `sidebarAdaptable` tab sidebars on iPhone use `defaultTabBarPlacement(_:)` behind `#available(iOS 27.0, *)`, with nested-tab content reachable when no sidebar is shown
 - [ ] Use `Inspector` for trailing-edge supplementary panels
 - [ ] Set column widths with `navigationSplitViewColumnWidth(min:ideal:max:)` or `inspectorColumnWidth(min:ideal:max:)`
 - [ ] Use appropriate presentation modifiers (sheet, fullScreenCover, popover)

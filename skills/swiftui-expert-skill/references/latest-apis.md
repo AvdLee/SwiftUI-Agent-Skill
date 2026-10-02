@@ -267,6 +267,8 @@ On iOS 18.4+ / macOS 15.4+, use the typed customization accessors:
 - `customization[tab: id].sidebarVisibility`
 - `customization[section: id].resetTabOrder()`
 
+On iOS 27+, `defaultTabBarPlacement(_:)` chooses a sidebar or tab bar on platforms where a `.sidebarAdaptable` `TabView` cannot morph (such as iPhone), and `@Environment(\.isTabViewSidebarAvailable)` reports whether a tab sidebar is available inside the tab content. See [`sheet-navigation-patterns.md`](sheet-navigation-patterns.md#tab-bar-and-sidebar-ios-27).
+
 ### Previews
 
 **Use `@Previewable` for dynamic properties in previews.**

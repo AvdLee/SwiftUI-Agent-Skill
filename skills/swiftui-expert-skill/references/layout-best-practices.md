@@ -40,6 +40,8 @@ VStack {
 
 **Why**: Hard-coded values don't account for different screen sizes, orientations, or dynamic content (like status bars during phone calls).
 
+Avoid fixed frames that match one device (for example `.frame(width: 390, height: 844)`) and hard-coded safe-area insets; both break when the window resizes.
+
 ## Context-Agnostic Views
 
 **Views should work in any context.** Never assume presentation style or screen size.
@@ -96,6 +98,12 @@ struct AdaptiveStack<Content: View>: View {
 ```
 
 Use `ViewThatFits` when a compact alternative should replace a layout that overflows the proposal. Do not branch layout on device orientation or a cached screen size.
+
+Use size classes for *what* to show (for example, fewer or more columns) and the proposed size, `containerRelativeFrame`, or `GeometryReader` for *how big* to draw something. When a layout decision only changes at a breakpoint, prefer `onChange(of: horizontalSizeClass)` over `onChange(of: geometry.size)`, which fires on every resize step.
+
+Avoid branching on a size class between two containers that already adapt on their own, such as `TabView` and `NavigationSplitView`. Swapping the container changes view identity mid-resize and discards navigation state and collapse animations. Branch only when the two layouts are genuinely different, and let `NavigationSplitView` and toolbar overflow handle compact-to-regular transitions. For `TabView`, see [Tab Bar and Sidebar](sheet-navigation-patterns.md#tab-bar-and-sidebar-ios-27).
+
+At wide sizes, consider capping the width of long-form text with `.frame(maxWidth:)` so line lengths stay readable.
 
 Read `@Environment(\.horizontalSizeClass)` or `@Environment(\.verticalSizeClass)` in the `View` or `ViewModifier` nearest the layout decision. Do not cache a size class in an `App`, `Scene`, model, or view model: those objects do not own the view's current proposal and can go stale during resizing. Move the decision into the view, or pass the current value into non-view code at the point of use when that code genuinely needs it.
 
@@ -403,6 +411,8 @@ Button("Publish Project") {
 - [ ] Adapt with proposed size, size classes, `ViewThatFits`, or `AnyLayout` — not `UIScreen.main` or orientation
 - [ ] Size classes are read nearest the consuming view (or from representable context), not cached in app/model state
 - [ ] Size classes replace available-space decisions, not genuine idiom or product-capability decisions
+- [ ] No device-sized fixed frames or hard-coded safe-area insets
+- [ ] Breakpoint decisions observe the size class, not every `geometry.size` change; self-adapting containers are not swapped by branch
 - [ ] Bar content uses `safeAreaBar` (with an availability fallback); other inset content uses `safeAreaInset`
 - [ ] Overlay bars that cover content move to `safeAreaBar`; full-bleed visual layers remain overlays/backgrounds
 - [ ] `safeAreaPadding` represents a fixed design margin, not a stand-in for a dynamic inset

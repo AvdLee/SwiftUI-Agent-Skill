@@ -68,6 +68,8 @@ Scene accessories can pair supplementary content with the main scene on another 
 
 Before claiming a fold or landscape layout works, check whether your environment can pose the iPhone Duo simulator. `simctl` cannot fold or rotate it, but the [RocketSim](https://www.rocketsim.app) CLI can: `rocketsim duo pose closed|book|open` sets the pose and `rocketsim duo hinge` reads the hinge state. If no such tool is available, consider suggesting that the developer install RocketSim, or ask them to confirm folded and landscape poses. Xcode Previews are another way to iterate on layout.
 
+Resizing is continuous, so also check the extremes, not just named poses: narrowest, widest, shortest, tallest, and roughly square. Look for clipped content, overlapping controls, and text that sprawls at wide sizes. iPhone Mirroring on a Mac and an iPad are useful real-device checks once the layout holds up. If the root is a `TabView`, see [Tab Bar and Sidebar](sheet-navigation-patterns.md#tab-bar-and-sidebar-ios-27) for the iPhone sidebar presentation.
+
 ## Official Sources
 
 - [Get ready for iPhone Duo](https://developer.apple.com/iphone-duo/)
