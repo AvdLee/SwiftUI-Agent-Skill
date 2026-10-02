@@ -29,6 +29,10 @@ These replacements have minimal API shape changes. Most are near-direct swaps; a
 - **`preferredColorScheme(_:)`** instead of `colorScheme(_:)`
 - **`foregroundStyle(_:)`** instead of `foregroundColor(_:)` (e.g., `.foregroundStyle(.primary)`)
 - **`clipShape(.rect(cornerRadius:))`** instead of `cornerRadius()`
+- **`background(alignment:content:)`** instead of `background(_:alignment:)`
+- **`overlay(alignment:content:)`** instead of `overlay(_:alignment:)`
+- **`mask(alignment:_:)`** instead of `mask(_:)`
+- **`frame(width:height:alignment:)`** or `frame(minWidth:idealWidth:maxWidth:minHeight:idealHeight:maxHeight:alignment:)` instead of parameterless `frame()`
 - **`textInputAutocapitalization(_:)`** instead of `autocapitalization(_:)` (note: `.never` replaces `.none`)
 - **`animation(_:value:)`** instead of `animation(_:)` (adds required `value:` parameter; back-deploys to iOS 13+)
 - **`dismiss` or `isPresented` environment values** instead of `PresentationMode` / `presentationMode`
@@ -75,6 +79,7 @@ Section(footer: Text("Changes apply immediately.")) {
 
 - **Always use `.confirmationDialog(_:isPresented:actions:message:)`** instead of `actionSheet(...)`.
 - **Always use `.alert(_:isPresented:actions:message:)`** instead of `alert(isPresented:content:)`.
+- **Always use `.alert(_:isPresented:presenting:actions:message:)`** instead of `alert(item:content:)`. Pass the optional model as `presenting:`.
 
 Both take a title `String`, `isPresented: Binding<Bool>`, an `actions` builder with `Button` items (supporting `role: .destructive` / `.cancel`), and an optional `message` builder:
 
@@ -114,6 +119,32 @@ extension EnvironmentValues {
 }
 ```
 
+### Previews
+
+**Always use the `#Preview` macro instead of `PreviewProvider`.** The macro back-deploys. Pass layout with preview traits instead of `previewLayout(_:)`. Choose the device in the Xcode canvas instead of `previewDevice(_:)`.
+
+```swift
+// Modern
+#Preview {
+    CircleImage()
+}
+
+#Preview(traits: .sizeThatFitsLayout) {
+    CircleImage()
+}
+
+// Deprecated
+struct CircleImage_Previews: PreviewProvider {
+    static var previews: some View {
+        CircleImage()
+            .previewLayout(.sizeThatFits)
+            .previewDevice("iPhone 16")
+    }
+}
+```
+
+`@Previewable` for dynamic properties inside `#Preview` requires iOS 18+. See the iOS 18 section below.
+
 ### Styling
 
 **Always use `Button` instead of `onTapGesture()` unless you need tap location or count.**
@@ -132,7 +163,7 @@ Image("photo")
 
 ### Navigation
 
-**Use `NavigationStack` (or `NavigationSplitView`) instead of `NavigationView`.** Value-based `NavigationLink(value:)` with `.navigationDestination(for:)` replaces destination-based links.
+**Use `NavigationStack` (or `NavigationSplitView`) instead of `NavigationView`.** Value-based `NavigationLink(value:)` with `.navigationDestination(for:)` replaces destination-based links. Replace `navigationViewStyle(_:)` the same way: drop the style modifier when you leave `NavigationView`.
 
 ```swift
 NavigationStack {
@@ -209,6 +240,10 @@ Use the conditional overload when feedback should fire only for specific transit
 
 - **`MagnifyGesture`** instead of `MagnificationGesture` (access magnitude via `value.magnification`)
 - **`RotateGesture`** instead of `RotationGesture` (access angle via `value.rotation`)
+
+### Focus
+
+**Use `focusable(_:)` instead of `focusable(_:onFocusChange:)`.** The replacement does not take a focus-change closure. It is available on macOS 12+, tvOS 15+, watchOS 8+, and iOS 17+.
 
 ### Layout
 
@@ -452,6 +487,10 @@ WebView(page)
 
 > Source: "Meet WebKit for SwiftUI" (WWDC25, session 231)
 
+### Image Playground
+
+**Use `imagePlaygroundOptions(_:)` instead of `imagePlaygroundPersonalizationPolicy(_:)`.** Pass personalization through `ImagePlaygroundOptions.Personalization`. The replacement is iOS, iPadOS, Mac Catalyst, macOS, and visionOS 26.4+.
+
 ### Drag and Drop
 
 **Use `dragContainer` for multi-item drag operations.** Combine with `DragConfiguration` for custom drag behavior and `onDragSessionUpdated` to observe events.
@@ -539,8 +578,16 @@ These APIs are from the beta iOS 27.1 SDK. Gate runtime use with `#available(iOS
 | `colorScheme(_:)` | `preferredColorScheme(_:)` | iOS 15+ |
 | `foregroundColor(_:)` | `foregroundStyle(_:)` | iOS 15+ |
 | `cornerRadius(_:)` | `clipShape(.rect(cornerRadius:))` | iOS 15+ |
+| `background(_:alignment:)` | `background(alignment:content:)` | iOS 15+ |
+| `overlay(_:alignment:)` | `overlay(alignment:content:)` | iOS 15+ |
+| `mask(_:)` | `mask(alignment:_:)` | iOS 15+ |
+| `frame()` (no arguments) | `frame(width:height:alignment:)` or the min/ideal/max overload | iOS 15+ |
 | `actionSheet(...)` | `confirmationDialog(...)` | iOS 15+ |
 | `alert(isPresented:content:)` | `alert(_:isPresented:actions:message:)` | iOS 15+ |
+| `alert(item:content:)` | `alert(_:isPresented:presenting:actions:message:)` | iOS 15+ |
+| `PreviewProvider` | `#Preview` | Back-deploys (Xcode 15+) |
+| `previewLayout(_:)` | `#Preview` traits such as `.sizeThatFitsLayout` or `.fixedLayout(width:height:)` | Back-deploys (Xcode 15+) |
+| `previewDevice(_:)` | Device picker in the Xcode preview canvas | Back-deploys (Xcode 15+) |
 | `autocapitalization(_:)` | `textInputAutocapitalization(_:)` | iOS 15+ |
 | `accessibility(label:)` etc. | `accessibilityLabel()` etc. | iOS 15+ |
 | `TextField` `onCommit`/`onEditingChanged` | `onSubmit` + `focused` | iOS 15+ |
@@ -550,6 +597,7 @@ These APIs are from the beta iOS 27.1 SDK. Gate runtime use with `#available(iOS
 | `Section(header:footer:content:)` | `Section(content:header:footer:)` | Future-deprecated |
 | Manual `EnvironmentKey` | `@Entry` macro | Back-deploys (Xcode 16+) |
 | `NavigationView` | `NavigationStack` / `NavigationSplitView` | iOS 16+ |
+| `navigationViewStyle(_:)` | `NavigationStack` / `NavigationSplitView` | iOS 16+ |
 | `accentColor(_:)` | `tint(_:)` | iOS 16+ |
 | `disableAutocorrection(_:)` | `autocorrectionDisabled(_:)` | iOS 16+ |
 | `UIPasteboard.general` | `PasteButton` | iOS 16+ |
@@ -559,6 +607,7 @@ These APIs are from the beta iOS 27.1 SDK. Gate runtime use with `#available(iOS
 | `RotationGesture` | `RotateGesture` | iOS 17+ |
 | `coordinateSpace(name:)` | `coordinateSpace(.named(...))` | iOS 17+ |
 | `ObservableObject` | `@Observable` | iOS 17+ |
+| `focusable(_:onFocusChange:)` | `focusable(_:)` | macOS 12+ / tvOS 15+ / watchOS 8+ / iOS 17+ |
 | `tabItem(_:)` | `Tab` API | iOS 18+ |
 | Manual 1:1 `animatableData` synthesis | `@Animatable` macro; keep manual logic for clamping/normalization | iOS 26+ |
 | `presentationBackground(_:)` on sheets | Default Liquid Glass sheet material | iOS 26+ |
@@ -581,3 +630,4 @@ These APIs are from the beta iOS 27.1 SDK. Gate runtime use with `#available(iOS
 | `ToolbarItem(..., showsByDefault:)` | `defaultCustomization(_:options:)` with `.hidden` | SDK 27 soft-deprecated |
 | `TabViewCustomization` legacy section/sidebar subscripts | Typed `section`/`tab` subscript properties | iOS 18.4+ / macOS 15.4+ |
 | Location/`isTargeted` `dropDestination` overload | `dropDestination(for:isEnabled:action:)` with `DropSession` | iOS/macOS/visionOS 26+ |
+| `imagePlaygroundPersonalizationPolicy(_:)` | `imagePlaygroundOptions(_:)` with `ImagePlaygroundOptions.Personalization` | iOS 26.4+ |
