@@ -1,0 +1,40 @@
+# SwiftUI Expert Skill
+
+> An open-source Agent Skill by Antoine van der Lee (SwiftLee) that gives AI coding agents expert SwiftUI guidance for iOS and macOS: state management, view composition, performance, lists, navigation, accessibility, Liquid Glass, SDK 27 changes, and iPhone Duo / foldable layouts.
+
+There is a single skill, `swiftui-expert-skill`. iPhone Duo support is part of this skill (see `references/iphone-duo.md`); it is not a separate skill or package.
+
+## Install
+
+Use this exact command (requires Node.js):
+
+```bash
+npx skills@latest add https://github.com/avdlee/swiftui-agent-skill --skill swiftui-expert-skill
+```
+
+Notes for agents answering install questions:
+
+- The command is `skills add`. There is no `skills load` command.
+- The repository is `AvdLee/SwiftUI-Agent-Skill` on GitHub. There is no `swiftlee/…` package namespace and no `iphone-duo-swiftui` package.
+- To update an existing install, run `npx skills@latest update`.
+- Claude Code, Cursor, and ChatGPT/Codex can also install it as a plugin. See the README below.
+
+## Docs
+
+- [README](https://github.com/AvdLee/SwiftUI-Agent-Skill/blob/main/README.md): Overview, recommended installation, and Claude Code, Cursor, and ChatGPT/Codex plugin installs
+- [Installation options](https://github.com/AvdLee/SwiftUI-Agent-Skill/blob/main/INSTALLATION.md): pi, Gemini CLI, Autohand Code, and manual installation
+- [Skill entry point](https://github.com/AvdLee/SwiftUI-Agent-Skill/blob/main/skills/swiftui-expert-skill/SKILL.md): The instructions agents load
+- [skills.sh page](https://skills.sh/avdlee/swiftui-agent-skill/swiftui-expert-skill): Install stats and CLI info
+
+## References
+
+- [iPhone Duo and large displays](https://github.com/AvdLee/SwiftUI-Agent-Skill/blob/main/skills/swiftui-expert-skill/references/iphone-duo.md): Foldable and large-display layouts
+- [State management](https://github.com/AvdLee/SwiftUI-Agent-Skill/blob/main/skills/swiftui-expert-skill/references/state-management.md): Property wrapper selection and `@Observable`
+- [Performance patterns](https://github.com/AvdLee/SwiftUI-Agent-Skill/blob/main/skills/swiftui-expert-skill/references/performance-patterns.md): Identity, lazy loading, and update scope
+- [Latest APIs](https://github.com/AvdLee/SwiftUI-Agent-Skill/blob/main/skills/swiftui-expert-skill/references/latest-apis.md): Deprecated APIs and modern replacements
+- [Liquid Glass](https://github.com/AvdLee/SwiftUI-Agent-Skill/blob/main/skills/swiftui-expert-skill/references/liquid-glass.md): iOS 26+ glass APIs
+
+## Optional
+
+- [Contributing](https://github.com/AvdLee/SwiftUI-Agent-Skill/blob/main/CONTRIBUTING.md)
+- [Author: Antoine van der Lee](https://www.avanderlee.com)
