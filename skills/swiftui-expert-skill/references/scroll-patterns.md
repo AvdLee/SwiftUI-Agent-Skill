@@ -221,7 +221,7 @@ struct ContentView: View {
                         }
                     )
             }
-            .coordinateSpace(.named("scroll"))
+            .coordinateSpace(name: "scroll")
             .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
                 let shouldShowHeader = offset >= -50
                 if shouldShowHeader != showHeader {
