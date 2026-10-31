@@ -34,9 +34,7 @@ everything.
 | Question | Tool |
 |----------|------|
 | Which hangs happened, and what was the main thread doing? | `xctrace triage`, then `xctrace show` |
-| Which call-tree frame or source line is responsible? | `xctrace show` |
-| Hitches, SwiftUI updates, cause graph, `--fanin-for` | `analyze_trace.py` |
-| Scoping to a log message or signpost | `analyze_trace.py` |
+| Hitches, SwiftUI updates, cause graph, log or signpost windows | `analyze_trace.py` |
 
 For Apple's full guidance, export its `xctrace` skill and read
 `xctrace/references/`:
@@ -54,7 +52,8 @@ xcrun xctrace triage <trace> --style hangs --format markdown
 # 2. See which tracks and details the trace holds.
 xcrun xctrace toc <trace>
 
-# 3. Drill into one hang. triage prints this command with the values filled in.
+# 3. Drill into one hang. triage prints this command for each hang; add
+#    --include-source-info to get file and line numbers.
 xcrun xctrace show <trace> \
   --track "MyApp (<pid>)/Main Thread (<thread-id>)" --calltree Profile \
   --time-start <start>ns --duration <duration>ns \
@@ -63,8 +62,9 @@ xcrun xctrace show <trace> \
 
 - Times must be integers. Call trees can run to hundreds of kilobytes, so write
   them to a file and search for your module's frames.
-- `triage` needs Hangs and Time Profiler data. A section that reads `N/A` usually
-  means the recording didn't capture that data, not that nothing happened there.
+- `triage` needs Hangs and Time Profiler data. A section that reads `N/A` may mean
+  the template didn't record that data, so check `xctrace toc` before treating
+  it as absent.
 - For blocked hangs, record with `--template "System Trace" --instrument Hangs`,
   which adds a System Call Trace track. These traces grow quickly, so keep
   recordings short.
@@ -80,17 +80,16 @@ xcrun xctrace show <trace> \
 | Severe Hang | 2 s |
 
 The parser's `severity_buckets` use different boundaries (`lt_250ms`,
-`250ms_1s`, `gt_1s`), so don't compare the two directly. Animation hitches are
-a separate concept that `triage` doesn't report.
+`250ms_1s`, `gt_1s`), so don't compare the two directly.
 
 Classify a hang before reading its call tree: high main-thread CPU means a busy
 hang, so focus on the time profile; low CPU means a blocked hang, so focus on
 system calls. Some hangs are both.
 
 **Low CPU isn't proof of a blocked app.** A main thread also shows low CPU when
-it can't get scheduled, as with a simulator on a heavily loaded Mac. Check the
-machine's load before blaming app code, and if it was busy, re-record on a quiet
-machine or a physical device. This also applies to
+it can't get scheduled, as with a simulator on a heavily loaded Mac. If the
+machine was busy during recording, re-record on a quiet machine or a physical
+device before blaming app code. This also applies to
 `main_running_coverage_pct` below.
 
 ## The three CLI modes

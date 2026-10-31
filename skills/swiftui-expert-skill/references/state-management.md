@@ -51,7 +51,7 @@ Always mark `@State` properties as `private`. Use for internal view state that t
 
 ### iOS 17+ with @Observable (Preferred)
 
-**Always prefer `@Observable` over `ObservableObject`.** The macro doesn't support `actor` types. With iOS 17's `@Observable` macro, use `@State` instead of `@StateObject`:
+**Always prefer `@Observable` over `ObservableObject`.** With iOS 17's `@Observable` macro, use `@State` instead of `@StateObject`:
 
 ```swift
 @Observable
@@ -385,7 +385,7 @@ struct AvatarBadge: View {
 }
 ```
 
-Forwarding a field to a subview counts as reading it, so don't flag a parent that takes `avatarURL` only to pass it to `AvatarBadge`. The rule targets fields the view never touches.
+Forwarding a field to a subview counts as reading it, so don't flag a parent that takes `avatarURL` only to pass it to `AvatarBadge`.
 
 This rule primarily applies to value types. Class references compare by identity; an `@Observable` class additionally tracks the individual properties read during `body`. Compound properties still have broad granularity: reading one element of an observed array or one field of an observed struct establishes a dependency on that whole stored property.
 

@@ -145,7 +145,6 @@ Record a new trace: attach to MyApp on my iPhone — I'll tell you when I'm done
 - `scripts/record_trace.py` — wraps `xctrace record`. Supports attach / launch / all-processes, stop-file for agent-driven sessions, time-limits, JSON device & template discovery.
 - `scripts/analyze_trace.py` — runs the five-lane analysis. Discovery modes `--list-logs`, `--list-signposts`, `--fanin-for` let the agent scope to a time window or trace a specific view back to its invalidation sources. `--window START_MS:END_MS` restricts every lane to a slice.
 - `scripts/instruments_parser/` — one module per lane (`time_profiler`, `hangs`, `hitches`, `swiftui`, `causes`), plus cross-lane `correlate` and a markdown `summary` renderer. Pure stdlib Python 3; only external dep is `xctrace` (ships with Xcode).
-- `xctrace triage` / `toc` / `show` (Xcode 27.2) — used directly for hang triage and call-tree drill-down; the parser still covers hitches, SwiftUI updates, and the cause graph.
 
 **Key diagnostic:** `main_running_coverage_pct` on each hang/hitch correlation. < 25 % → main thread was blocked (I/O, lock, sync await); ≥ 75 % → CPU-bound. This single metric separates two radically different fix paths.
 

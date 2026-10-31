@@ -48,6 +48,10 @@ python3 "${SKILL_DIR}/scripts/record_trace.py" \
   --output ~/Desktop/launch.trace
 ```
 
+On a simulator, pass the bundle ID to `--launch` instead. A `.app` path from
+DerivedData can run in the background while the simulator stays on the home
+screen, so the trace contains no real interaction.
+
 Useful for diagnosing cold-start hitches and view-creation cost.
 
 ### C) Agent-driven: start in background, stop via stop-file
@@ -102,8 +106,7 @@ plug them in before recording.
 > chosen UDID falls under the `simulators` kind from `--list-devices`,
 > switch to `Time Profiler`. It gives you Time Profiler + Hangs, which
 > `analyze_trace.py` analyses and correlates normally; the `hitches` and
-> `swiftui` lanes will report `available: false`. Record the
-> `Animation Hitches` template separately when you need hitch data.
+> `swiftui` lanes will report `available: false`.
 
 Decision flow:
 
@@ -122,21 +125,17 @@ the user to connect/unlock/trust the device before recording.
 For ad-hoc hang hunting on any target, `Time Profiler` or
 `Animation Hitches` alone may be enough.
 
-`xctrace triage` needs both Hangs and Time Profiler data, which the
-`Time Profiler` template records. Its Hangs threshold defaults to 250 ms, so
-lower it to capture the lighter tiers in `references/trace-analysis.md`.
-`record_trace.py` doesn't forward recording options, so call `xctrace` directly:
+The `Time Profiler` template's Hangs threshold defaults to 250 ms, so lower it to
+capture the lighter tiers in `references/trace-analysis.md`. `record_trace.py`
+doesn't forward recording options, so call `xctrace` directly:
 
 ```bash
 xcrun xctrace record --template "Time Profiler" --show-recording-options \
   | sed 's/"hangsThreshold" : 250/"hangsThreshold" : 33/' > options.json
-xcrun xctrace record --template "Time Profiler" --recording-options options.json \
-  --device "<UDID>" --time-limit 60s --output ~/Desktop/hangs.trace \
-  --launch -- com.example.MyApp
+xcrun xctrace record --no-prompt --template "Time Profiler" \
+  --recording-options options.json --device "<UDID>" --time-limit 60s \
+  --output ~/Desktop/hangs.trace --launch -- com.example.MyApp
 ```
-
-The options file must contain the full printed structure; a partial file fails
-to load.
 
 For an explicitly approved system-wide recording:
 
@@ -174,10 +173,6 @@ If the user wanted a specific scope, combine with `--list-logs` /
   executable name. An app whose executable is `MyApp` but whose display name
   is `Trails` attaches as `--attach Trails`. If a simulator app's PID reports
   `Cannot find process for provided pid`, try that name instead.
-- **Simulator app never comes to the foreground (for `--launch`)** — pass the
-  bundle ID (`--launch com.example.MyApp`). A `.app` path from DerivedData can
-  run in the background while the simulator stays on the home screen, so the
-  trace contains no real interaction. Check with a simulator screenshot.
 - **Signing / trust on device** — iOS requires a development build
   signed with the user's team. If xctrace returns a signing error, point
   the user to trust the developer profile on the device.
