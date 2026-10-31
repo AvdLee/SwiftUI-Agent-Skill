@@ -51,7 +51,7 @@ Always mark `@State` properties as `private`. Use for internal view state that t
 
 ### iOS 17+ with @Observable (Preferred)
 
-**Always prefer `@Observable` over `ObservableObject`.** With iOS 17's `@Observable` macro, use `@State` instead of `@StateObject`. The macro doesn't support `actor` types:
+**Always prefer `@Observable` over `ObservableObject`.** The macro doesn't support `actor` types. With iOS 17's `@Observable` macro, use `@State` instead of `@StateObject`:
 
 ```swift
 @Observable

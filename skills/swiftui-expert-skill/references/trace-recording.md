@@ -172,7 +172,8 @@ If the user wanted a specific scope, combine with `--list-logs` /
 - **`Cannot find process matching name`** — `--attach` matches the name
   Instruments shows for the process, which can differ from the scheme or
   executable name. An app whose executable is `MyApp` but whose display name
-  is `Trails` attaches as `--attach Trails`.
+  is `Trails` attaches as `--attach Trails`. If a simulator app's PID reports
+  `Cannot find process for provided pid`, try that name instead.
 - **Simulator app never comes to the foreground (for `--launch`)** — pass the
   bundle ID (`--launch com.example.MyApp`). A `.app` path from DerivedData can
   run in the background while the simulator stays on the home screen, so the
