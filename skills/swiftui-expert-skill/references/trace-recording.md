@@ -100,9 +100,10 @@ plug them in before recording.
 > real device — a physical iOS/iPadOS device or the host Mac. On the iOS
 > Simulator it records but the SwiftUI lane comes back empty.** If the
 > chosen UDID falls under the `simulators` kind from `--list-devices`,
-> switch to `Time Profiler`. It still gives you Time Profiler + Hangs +
-> Animation Hitches, which `analyze_trace.py` analyses and correlates
-> normally; only the `swiftui` lane will report `available: false`.
+> switch to `Time Profiler`. It gives you Time Profiler + Hangs, which
+> `analyze_trace.py` analyses and correlates normally; the `hitches` and
+> `swiftui` lanes will report `available: false`. Record the
+> `Animation Hitches` template separately when you need hitch data.
 
 Decision flow:
 
@@ -120,6 +121,22 @@ the user to connect/unlock/trust the device before recording.
 
 For ad-hoc hang hunting on any target, `Time Profiler` or
 `Animation Hitches` alone may be enough.
+
+`xctrace triage` needs both Hangs and Time Profiler data, which the
+`Time Profiler` template records. Its Hangs threshold defaults to 250 ms, so
+lower it to capture the lighter tiers in `references/trace-analysis.md`.
+`record_trace.py` doesn't forward recording options, so call `xctrace` directly:
+
+```bash
+xcrun xctrace record --template "Time Profiler" --show-recording-options \
+  | sed 's/"hangsThreshold" : 250/"hangsThreshold" : 33/' > options.json
+xcrun xctrace record --template "Time Profiler" --recording-options options.json \
+  --device "<UDID>" --time-limit 60s --output ~/Desktop/hangs.trace \
+  --launch -- com.example.MyApp
+```
+
+The options file must contain the full printed structure; a partial file fails
+to load.
 
 For an explicitly approved system-wide recording:
 
@@ -152,6 +169,14 @@ If the user wanted a specific scope, combine with `--list-logs` /
   a new `--output` or delete the existing bundle.
 - **App not running (for `--attach`)** — xctrace exits with an error;
   fall back to `--launch` or tell the user to open the app first.
+- **`Cannot find process matching name`** — `--attach` matches the name
+  Instruments shows for the process, which can differ from the scheme or
+  executable name. An app whose executable is `MyApp` but whose display name
+  is `Trails` attaches as `--attach Trails`.
+- **Simulator app never comes to the foreground (for `--launch`)** — pass the
+  bundle ID (`--launch com.example.MyApp`). A `.app` path from DerivedData can
+  run in the background while the simulator stays on the home screen, so the
+  trace contains no real interaction. Check with a simulator screenshot.
 - **Signing / trust on device** — iOS requires a development build
   signed with the user's team. If xctrace returns a signing error, point
   the user to trust the developer profile on the device.
