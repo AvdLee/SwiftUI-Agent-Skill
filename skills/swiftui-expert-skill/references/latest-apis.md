@@ -227,6 +227,17 @@ Image("hero")
   ```
 - **`.coordinateSpace(.named("scroll"))`** instead of `.coordinateSpace(name: "scroll")`.
 
+### Title Display Mode
+
+**Prefer `toolbarTitleDisplayMode(_:)` over `navigationBarTitleDisplayMode(_:)`.** `ToolbarTitleDisplayMode` covers every `NavigationBarItem.TitleDisplayMode` case (`.automatic`, `.inline`, `.large`), adds `.inlineLarge`, and the modifier is also available on macOS 14+ and tvOS 17+, where `navigationBarTitleDisplayMode(_:)` is unavailable. `navigationBarTitleDisplayMode(_:)` is not deprecated as of the SDK 27 toolchain, so treat existing usages as informational and keep it only for deployment targets below iOS 17.
+
+```swift
+.navigationTitle("Inbox")
+.toolbarTitleDisplayMode(.inlineLarge)
+```
+
+Case availability differs by platform: `.large` is unavailable on macOS and tvOS, and `.inlineLarge` is available on iOS, macOS, and visionOS but not on tvOS or watchOS.
+
 Prefer overloads accepting `CoordinateSpaceProtocol` for `SpatialTapGesture`, location-aware `onTapGesture`, `onContinuousHover`, and `GeometryProxy.frame(in:)`.
 
 Resolve a color in the current environment before accessing Core Graphics:
@@ -558,6 +569,7 @@ These APIs are from the beta iOS 27.1 SDK. Gate runtime use with `#available(iOS
 | `MagnificationGesture` | `MagnifyGesture` | iOS 17+ |
 | `RotationGesture` | `RotateGesture` | iOS 17+ |
 | `coordinateSpace(name:)` | `coordinateSpace(.named(...))` | iOS 17+ |
+| `navigationBarTitleDisplayMode(_:)` | `toolbarTitleDisplayMode(_:)` | iOS 17+ / macOS 14+; old API not deprecated |
 | `ObservableObject` | `@Observable` | iOS 17+ |
 | `tabItem(_:)` | `Tab` API | iOS 18+ |
 | Manual 1:1 `animatableData` synthesis | `@Animatable` macro; keep manual logic for clamping/normalization | iOS 26+ |
