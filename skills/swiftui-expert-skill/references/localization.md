@@ -19,7 +19,7 @@ Guidance for user-facing text: `Text`, `Button`, `Label`, navigation/toolbar tit
 
 ## SwiftUI Localizes String Literals Automatically
 
-Initializers that accept `LocalizedStringKey` (`Text`, `Button`, `Label`, `.navigationTitle`, alert titles, and so on) treat string literals as localization keys automatically. Do not wrap literals in `NSLocalizedString`, `String(localized:)`, or `LocalizedStringResource` — that resolves the string eagerly and ignores `\.locale` overrides.
+Initializers that accept `LocalizedStringKey` (`Text`, `Button`, `Label`, `.navigationTitle`, alert titles, and so on) treat string literals as localization keys automatically. Do not wrap literals in `NSLocalizedString`, `String(localized:)`, or `LocalizedStringResource`. `NSLocalizedString` and `String(localized:)` also resolve the string eagerly and ignore `\.locale` overrides.
 
 ```swift
 // AVOID: double work, and resolves eagerly
