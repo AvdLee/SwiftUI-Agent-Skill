@@ -47,6 +47,8 @@ Always mark `@State` properties as `private`. Use for internal view state that t
 
 **Why Private?** Marking state as `private` makes it clear what's created by the view versus what's passed in. It also prevents accidentally passing initial values that will be ignored (see "Don't Pass Values as @State" below).
 
+`private` also affects cost: from iOS 17 and macOS 14, the `@State` macro defers an initial-value expression only when the getter is `private` or `fileprivate`. With wider access, `@State var store = Store()` builds a new `Store` on every view initialization and discards it. When reviewing existing non-private `@State`, recommend `private` but leave the change to the user unless asked, because it can break callers.
+
 ### iOS 17+ with @Observable (Preferred)
 
 **Always prefer `@Observable` over `ObservableObject`.** With iOS 17's `@Observable` macro, use `@State` instead of `@StateObject`:
@@ -382,6 +384,8 @@ struct AvatarBadge: View {
     }
 }
 ```
+
+Forwarding a field to a subview counts as reading it, so don't flag a parent that takes `avatarURL` only to pass it to `AvatarBadge`.
 
 This rule primarily applies to value types. Class references compare by identity; an `@Observable` class additionally tracks the individual properties read during `body`. Compound properties still have broad granularity: reading one element of an observed array or one field of an observed struct establishes a dependency on that whole stored property.
 

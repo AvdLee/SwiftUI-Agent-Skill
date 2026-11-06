@@ -25,6 +25,73 @@ Triggering does **not** require a SwiftUI source file. If one is present
 you'll ground recommendations in specific lines; if not, base them on the
 view names and symbols the trace reveals.
 
+## Choosing a tool
+
+Xcode 27.2's `xctrace` includes `triage`, `toc`, and `show`. Run `xctrace help`
+to confirm your version has them; if it doesn't, use the bundled parser for
+everything.
+
+| Question | Tool |
+|----------|------|
+| Which hangs happened, and what was the main thread doing? | `xctrace triage`, then `xctrace show` |
+| Hitches, SwiftUI updates, cause graph, log or signpost windows | `analyze_trace.py` |
+
+For Apple's full guidance, export its `xctrace` skill and read
+`xctrace/references/`:
+
+```bash
+xcrun mcpbridge run-agent skills export --output-dir /tmp/xcode-skills
+```
+
+### Hang triage with `xctrace`
+
+```bash
+# 1. List hangs, longest first, with a main-thread summary for each.
+xcrun xctrace triage <trace> --style hangs --format markdown
+
+# 2. See which tracks and details the trace holds.
+xcrun xctrace toc <trace>
+
+# 3. Drill into one hang. triage prints this command for each hang; add
+#    --include-source-info to get file and line numbers.
+xcrun xctrace show <trace> \
+  --track "MyApp (<pid>)/Main Thread (<thread-id>)" --calltree Profile \
+  --time-start <start>ns --duration <duration>ns \
+  --include-source-info --format markdown
+```
+
+- Times must be integers. Call trees can run to hundreds of kilobytes, so write
+  them to a file and search for your module's frames.
+- `triage` needs Hangs and Time Profiler data. A section that reads `N/A` may mean
+  the template didn't record that data, so check `xctrace toc` before treating
+  it as absent.
+- For blocked hangs, record with `--template "System Trace" --instrument Hangs`,
+  which adds a System Call Trace track. These traces grow quickly, so keep
+  recordings short.
+
+`triage` classifies each hang by duration:
+
+| Tier | Longer than |
+|------|-------------|
+| Potential Interaction Delay | 33 ms |
+| Brief Unresponsiveness | 100 ms |
+| Microhang | 250 ms |
+| Hang | 500 ms |
+| Severe Hang | 2 s |
+
+The parser's `severity_buckets` use different boundaries (`lt_250ms`,
+`250ms_1s`, `gt_1s`), so don't compare the two directly.
+
+Classify a hang before reading its call tree: high main-thread CPU means a busy
+hang, so focus on the time profile; low CPU means a blocked hang, so focus on
+system calls. Some hangs are both.
+
+**Low CPU isn't proof of a blocked app.** A main thread also shows low CPU when
+it can't get scheduled, as with a simulator on a heavily loaded Mac. If the
+machine was busy during recording, re-record on a quiet machine or a physical
+device before blaming app code. This also applies to
+`main_running_coverage_pct` below.
+
 ## The three CLI modes
 
 The scripts live alongside this skill at `scripts/` and need only the

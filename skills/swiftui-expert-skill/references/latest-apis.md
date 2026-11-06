@@ -536,7 +536,7 @@ On iOS 27+, use `toolbarVisibility(_:for: .statusBar)` instead of `statusBarHidd
 
 ### Additional SDK 27 soft-deprecated families
 
-Use `Menu` / `MenuStyle` instead of `MenuButton`, `MenuButtonStyle`, and the legacy menu-button styles (`PullDownMenuButtonStyle`, `BorderlessPullDownMenuButtonStyle`, `BorderlessButtonMenuButtonStyle`, `DefaultMenuButtonStyle`, `BorderedButtonMenuStyle`, and `BorderlessButtonMenuStyle`). Use `.menuStyle(.menu)` or `.menuStyle(.button)` with a button style instead of `PopUpButtonPickerStyle`.
+Use `Menu` / `MenuStyle` instead of `MenuButton`, `MenuButtonStyle`, and the legacy menu-button styles (`PullDownMenuButtonStyle`, `BorderlessPullDownMenuButtonStyle`, `BorderlessButtonMenuButtonStyle`, `DefaultMenuButtonStyle`, `BorderedButtonMenuStyle`, and `BorderlessButtonMenuStyle`). Use `.pickerStyle(.menu)` instead of `PopUpButtonPickerStyle`.
 
 Other lookup entries from the SDK include:
 
@@ -546,7 +546,10 @@ Other lookup entries from the SDK include:
 - `Picker(selection:label:content:)` → `Picker(selection:content:label:)`
 - `Color(_:)` platform and `CGColor` initializers → `Color(uiColor:)`, `Color(nsColor:)`, and `Color(cgColor:)`; `Color.cgColor` → `resolve(in:).cgColor`
 - `onLongPressGesture` overloads with `pressing:` → `onLongPressGesture(minimumDuration:maximumDuration:perform:onPressingChanged:)` or its shorter counterpart
-- `Font.system(_:design:)` and legacy `Font.system(size:weight:design:)` forms → `system(_:weight:design:)` and the current size/weight/design overloads
+- `Font.system(_:design:)` and legacy `Font.system(size:weight:design:)` forms → `system(_:design:weight:)` and the current size/weight/design overloads
+- `Slider` initializers with `onEditingChanged:` before `label:` → `Slider(value:in:label:onEditingChanged:)` and its `step:` and `minimumValueLabel:maximumValueLabel:` counterparts
+- `Stepper` initializers with `onEditingChanged:` before `label:` → `Stepper(value:step:label:onEditingChanged:)`, `Stepper(value:in:step:label:onEditingChanged:)`, and `Stepper(label:onIncrement:onDecrement:onEditingChanged:)`
+- `SecureField` initializers with `onCommit:` → `SecureField(_:text:)` plus `onSubmit(of:_:)`
 - `Section.collapsible(_:)` → a standard `Section` initializer (collapsibility is no longer enabled by that modifier)
 - string-type paste/drop APIs (`PasteButton`, `onPasteCommand`, `onInsert`, and `DropInfo.hasItemsConforming`) → UTType-based APIs
 

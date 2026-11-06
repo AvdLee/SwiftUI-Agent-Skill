@@ -49,7 +49,7 @@ Trigger when the user asks to "record a trace", "profile the app", "capture a se
    ```bash
    python3 "${SKILL_DIR}/scripts/record_trace.py" --list-devices
    ```
-2. **Pick a template based on target kind** — the `SwiftUI` template populates the SwiftUI lane on any **real device**: a physical iOS/iPadOS device **or the host Mac**. The only exception is the **iOS Simulator**, where the SwiftUI lane comes back empty — switch to `--template "Time Profiler"` in that case (still gives Time Profiler + Hangs + Animation Hitches). Always check `--list-devices`: `simulators` kind → `Time Profiler`; `devices` kind (real devices and the host Mac) → default `SwiftUI`. Full decision table in `references/trace-recording.md`.
+2. **Pick a template based on target kind** — the `SwiftUI` template populates the SwiftUI lane on any **real device**: a physical iOS/iPadOS device **or the host Mac**. The only exception is the **iOS Simulator**, where the SwiftUI lane comes back empty — switch to `--template "Time Profiler"` in that case (gives Time Profiler + Hangs, but no Animation Hitches). Always check `--list-devices`: `simulators` kind → `Time Profiler`; `devices` kind (real devices and the host Mac) → default `SwiftUI`. Full decision table in `references/trace-recording.md`.
 3. **Start the recording**. For agent-driven sessions where the user says "I'll tell you when I'm done", start in the background and use a stop-file:
    ```bash
    python3 "${SKILL_DIR}/scripts/record_trace.py" \
@@ -63,7 +63,11 @@ Trigger when the user asks to "record a trace", "profile the app", "capture a se
 ### Trace-driven improvement (Instruments `.trace` provided)
 Trigger whenever the user's request references a `.trace` file. A target SwiftUI source file is **optional** — if given, cite specific lines; if not, recommend where to look based on view names and symbols the trace already reveals.
 
-Full reference: `references/trace-analysis.md`. Summary of the composition pattern:
+Full reference: `references/trace-analysis.md`.
+
+**Hangs:** if `xctrace help` lists `triage` (Xcode 27.2 does), start with `xctrace triage <trace> --style hangs`, then drill in with `xctrace show`. The bundled parser remains the tool for hitches, SwiftUI updates, the cause graph, and log or signpost windows.
+
+Summary of the parser's composition pattern:
 
 1. **Scope the analysis.** Ask yourself: does the user want the whole trace, or a slice?
    - "focus on X / after X / between X and Y / during X" → **resolve to a window first** (see step 2).
@@ -98,7 +102,7 @@ Consult the reference file for each topic relevant to the current task:
 | Topic | Reference |
 |-------|-----------|
 | State management | `references/state-management.md` |
-| Environment and `@Entry` | `references/environment-patterns.md` |
+| Environment and `@Entry`, including "Storing a closure/class type in '@Entry var'" warnings | `references/environment-patterns.md` |
 | View composition | `references/view-structure.md` |
 | View modifiers and identity | `references/modifier-patterns.md` |
 | Performance | `references/performance-patterns.md` |

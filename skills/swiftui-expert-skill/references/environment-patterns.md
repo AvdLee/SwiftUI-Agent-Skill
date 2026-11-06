@@ -70,6 +70,8 @@ When reviewing existing manual `EnvironmentKey` / `FocusedValueKey` boilerplate,
 
 SwiftUI cannot reliably compare functions. A closure in a custom environment or focused-value key can therefore make every reader invalidate whenever the environment propagates. Wrapping the closure in a struct or storing it on a `View` does not fix comparison; the closure is still present.
 
+The compiler reports this for `@Entry` as "Storing a closure in '@Entry var ...' may invalidate dependents on every update".
+
 Framework action values such as `\.dismiss`, `\.openURL`, and `\.refresh` are designed for this purpose and are not affected by this rule.
 
 Represent custom behavior with a value that stores comparable inputs and exposes a method or `callAsFunction`, or share an `@Observable` model when the behavior belongs with shared state:
@@ -94,7 +96,7 @@ When injected handlers differ by context (form vs cart, independent implementati
 
 ## Keep Default Values Stable
 
-An `@Entry` default expression is evaluated when a reader falls back to it. The default is unstable when repeated evaluation produces a different value, such as a fresh class instance, `Date()`, `UUID()`, or a struct containing a newly allocated reference. Any unrelated environment write can then make fallback readers appear changed.
+An `@Entry` default expression is evaluated when a reader falls back to it. The default is unstable when repeated evaluation produces a different value, such as a fresh class instance, `Date()`, `UUID()`, or a struct containing a newly allocated reference. Any unrelated environment write can then make fallback readers appear changed. For a class-typed default, the compiler reports "Storing a class type in '@Entry var ...' may invalidate dependents on every update".
 
 ```swift
 // AVOID: creates a different instance on each fallback read
