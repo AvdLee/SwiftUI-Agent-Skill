@@ -1,10 +1,19 @@
 """Thin wrapper around the `xctrace` CLI."""
 from __future__ import annotations
 
+import logging
 import subprocess
+import time
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
+
+
+logger = logging.getLogger(__name__)
+# Retry configuration for transient xctrace crashes (e.g. SIGSEGV)
+_MAX_RETRIES = 3
+_INITIAL_BACKOFF_S = 1.0
+
 
 
 @dataclass(frozen=True)
@@ -102,14 +111,48 @@ def export_schema(trace_path: Path, schema: str, run: int = 1) -> bytes:
 
 
 def _run_export(trace_path: Path, extra_args: list[str]) -> bytes:
+    """Run xctrace export with retry logic for transient crashes.
+
+    Apple's xctrace CLI intermittently crashes with SIGSEGV (exit code -11).
+    The same command usually succeeds on retry, so we retry up to _MAX_RETRIES
+    times with exponential backoff when the process is terminated by a signal
+    (negative return code). Non-signal failures (e.g. invalid arguments) are
+    not retried.
+    """
     cmd = ["xctrace", "export", "--input", str(trace_path), *extra_args]
-    proc = subprocess.run(cmd, capture_output=True, check=False)
-    if proc.returncode != 0:
+
+    for attempt in range(1, _MAX_RETRIES + 1):
+        proc = subprocess.run(cmd, capture_output=True, check=False)
+
+        if proc.returncode == 0:
+            return proc.stdout
+
+        # Only retry on signal-terminated processes (negative return codes)
+        is_signal_crash = proc.returncode < 0
+
+        if is_signal_crash and attempt < _MAX_RETRIES:
+            backoff = _INITIAL_BACKOFF_S * (2 ** (attempt - 1))
+            logger.warning(
+                "xctrace export crashed with signal (exit code %d), "
+                "retrying in %.1fs (attempt %d/%d)...",
+                proc.returncode, backoff, attempt, _MAX_RETRIES,
+            )
+            time.sleep(backoff)
+            continue
+
+        # Final attempt failed, or non-signal error — raise
+        stderr_text = proc.stderr.decode(errors="replace").strip()
+        if is_signal_crash:
+            raise RuntimeError(
+                f"xctrace export crashed after {_MAX_RETRIES} attempts "
+                f"(exit code {proc.returncode}): {stderr_text}"
+            )
         raise RuntimeError(
-            f"xctrace export failed ({proc.returncode}): "
-            f"{proc.stderr.decode(errors='replace').strip()}"
+            f"xctrace export failed ({proc.returncode}): {stderr_text}"
         )
-    return proc.stdout
+
+    # Unreachable, but satisfies type checker
+    raise RuntimeError("xctrace export: unexpected loop exit")
 
 
 def _find_text(root: ET.Element, path: str) -> str | None:
