@@ -17,6 +17,10 @@ import json
 import sys
 from pathlib import Path
 
+# Keep the sibling package importable when the script's folder is not on
+# sys.path, as with PYTHONSAFEPATH=1 or `python3 -P`.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 from instruments_parser import (
     causes,
     correlate,
