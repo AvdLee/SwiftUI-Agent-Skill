@@ -221,6 +221,7 @@ Add new categories or paths as Apple introduces new APIs.
 
 Key "What's new in SwiftUI" sessions to check for API announcements:
 
+- `/videos/play/wwdc2026/269` - What's new in SwiftUI (WWDC26)
 - `/videos/play/wwdc2024/10144` - What's new in SwiftUI (WWDC24)
 - `/videos/play/wwdc2024/10145` - SwiftUI essentials (WWDC24)
 - `/videos/play/wwdc2025/232` - What's new in SwiftUI (WWDC25)
