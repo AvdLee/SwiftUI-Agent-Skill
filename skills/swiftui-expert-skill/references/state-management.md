@@ -102,12 +102,12 @@ Keep `@State` private. Use an initializer seed only for intentional one-time own
 
 ## Property Wrappers Inside @Observable Classes
 
-**Critical**: Property wrappers that conform to `DynamicProperty` — such as `@AppStorage`, `@SceneStorage`, and `@Query` — **must live in a `View`**, not in an `@Observable` class. These wrappers rely on SwiftUI's view lifecycle to install and subscribe to their underlying storage. Inside a class, they are plain getters/setters that do not trigger view updates.
+**Critical**: `@AppStorage`, `@SceneStorage`, and `@Query` rely on SwiftUI to install and subscribe to their storage, which only happens when they are stored in a SwiftUI type such as a `View`. **Never put them inside an `@Observable` class** and expect views to update:
 
-**Do not place `@AppStorage`, `@SceneStorage`, or `@Query` inside `@Observable` classes**, even with `@ObservationIgnored`:
+- `@AppStorage` and `@SceneStorage` are `DynamicProperty` wrappers. Inside a class they are plain getters/setters over `UserDefaults` or scene storage. Views that read `model.someAppStorageProperty` will **not** re-render when the value changes, neither after `model.someAppStorageProperty = …` nor after an outside `UserDefaults` write.
+- `@Query` is a SwiftData macro that needs a view's model context. `@ObservationIgnored @Query` inside an `@Observable` class does not compile: `expansion of macro 'ObservationIgnored()' produced an unexpected getter`.
 
-- `@AppStorage` and `@SceneStorage` are `DynamicProperty` wrappers. Inside a class, they read/write `UserDefaults` or scene storage directly, but views that read `model.someAppStorageProperty` will **not** re-render when the value changes.
-- `@Query` is a macro that requires a view's model context. Using `@ObservationIgnored @Query` inside an `@Observable` class produces a compiler error: `expansion of macro 'ObservationIgnored()' produced an unexpected getter`.
+`@ObservationIgnored` is still required to make `@AppStorage` and `@SceneStorage` compile inside an `@Observable` class (without it, the `@Observable` macro and the property wrapper both synthesize the same backing storage). It only fixes the compile error. It does not make views update.
 
 **Correct pattern**: Keep these wrappers in the `View` that reads them.
 
@@ -133,6 +133,7 @@ struct SettingsView: View {
     }
 }
 ```
+
 If you need to share persisted values across views, read them in each view or pass them down as `@Binding`. For SwiftData, use `@Query` directly in the view that displays the data:
 
 ```swift
@@ -146,6 +147,28 @@ struct ItemListView: View {
     }
 }
 ```
+
+**If a persisted value must live in the model**, wrap the `UserDefaults` access in `access(keyPath:)` and `withMutation(keyPath:)` so Observation tracks it:
+
+```swift
+@Observable
+@MainActor
+final class SettingsModel {
+    var username: String {
+        get {
+            access(keyPath: \.username)
+            return UserDefaults.standard.string(forKey: "username") ?? ""
+        }
+        set {
+            withMutation(keyPath: \.username) {
+                UserDefaults.standard.set(newValue, forKey: "username")
+            }
+        }
+    }
+}
+```
+
+Views update when the model writes the value. They do **not** update when something else writes the same key to `UserDefaults`.
 
 ## Make @Observable Property Types Equatable
 
@@ -490,7 +513,7 @@ SwiftUI can't track changes through nested `ObservableObject` properties. Workar
 5. **Always mark `@State` and `@StateObject` as `private`**
 6. Do not store changing parent-owned inputs as `@State` or `@StateObject`; use private state only for intentional child ownership
 7. With `@Observable`, nested objects work fine; with `ObservableObject`, pass nested objects directly to child views
-8. **Never put `DynamicProperty` wrappers (`@AppStorage`, `@SceneStorage`, `@Query`) inside `@Observable` classes** — they only work in `View` types; placing them in a class either fails to compile (`@Query`) or silently breaks view updates (`@AppStorage`, `@SceneStorage`)
+8. **Never put `@AppStorage`, `@SceneStorage`, or `@Query` inside `@Observable` classes** — keep them in the `View`. `@Query` does not compile there. `@AppStorage` and `@SceneStorage` need `@ObservationIgnored` to compile, but then silently fail to update views that read them through the model
 9. **Prefer `Equatable` types for frequently-written `@Observable` properties** so the generated setter skips redundant invalidations
 10. Pass value-type views only the fields they read
 11. Isolate side-effect-only dependencies when they would invalidate an expensive parent
