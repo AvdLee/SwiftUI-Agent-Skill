@@ -72,33 +72,30 @@ struct ContentView: View {
 
 ## Struct or Method / Computed Property?
 
-If a `View` is intended to be reusable across multiple screens, encapsulate it within a separate `struct`. If its usage is confined to a single context, it can be declared as a function or computed property within the containing `View`.
+Factor a section of a view into a separate `View` struct, not into a computed property or a `@ViewBuilder` method. A computed property or method is inlined into the parent's `body`, so it shares the parent's invalidation boundary and does not reduce update cost (see [Extract Subviews, Not Computed Properties](#extract-subviews-not-computed-properties)). This applies to a section that only one screen uses, too.
 
-However, if a view maintains state using `@State`, `@Binding`, `@ObservedObject`, `@Environment`, `@StateObject`, or similar wrappers, it should generally be a separate `struct`.
-
-- For simple, static views: a computed property is acceptable.
-- For views requiring parameters: a method is more appropriate, but only when those parameters are stable. If parameters change per-call (e.g. inside a `ForEach` where each call receives a different item), prefer a separate `struct` so SwiftUI can diff inputs and skip body evaluation.
-- For reusable, stateful, or logically independent UI sections: prefer a dedicated `struct`.
+- For a section of the screen (a header, a list, a footer, a detail section): use a dedicated `struct` with narrow inputs.
+- For a view that maintains state with `@State`, `@Binding`, `@ObservedObject`, `@Environment`, `@StateObject`, or similar wrappers: use a dedicated `struct`.
+- For a view whose parameters change per call (e.g. inside a `ForEach` where each call receives a different item): use a dedicated `struct` so SwiftUI can diff inputs and skip body evaluation.
+- For a tiny fragment that the same `body` reuses two or three times, with no independent invalidation story: a computed property or a small method is fine.
 
 ```swift
-struct ContentView: View {
-    var titleView: some View {
-        Text("Hello from Property")
-            .font(.largeTitle)
-            .foregroundStyle(.blue)
-    }
+struct ScoreRow: View {
+    let home: Int
+    let away: Int
 
-    func messageView(text: String, color: Color) -> some View {
-        Text(text)
-            .font(.title)
-            .foregroundStyle(color)
-            .padding()
+    // A tiny fragment that this body reuses: a method is fine here.
+    private func score(_ value: Int) -> some View {
+        Text(value, format: .number)
+            .font(.title.monospacedDigit())
+            .frame(minWidth: 44)
     }
 
     var body: some View {
-        VStack {
-            titleView
-            messageView(text: "Hello from Method", color: .red)
+        HStack {
+            score(home)
+            Text("–")
+            score(away)
         }
     }
 }
