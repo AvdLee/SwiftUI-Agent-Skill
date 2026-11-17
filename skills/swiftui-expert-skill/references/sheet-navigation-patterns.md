@@ -147,6 +147,8 @@ Prefer the item overload for an action tied to an optional value instead of sync
 
 Give each navigation screen a meaningful `.navigationTitle`, even when the design does not show it in the bar. On iOS, the back button's long-press menu uses titles to identify earlier screens. Omitting the title or setting it to an empty string makes those destinations difficult to identify.
 
+A custom `ToolbarItem(placement: .title) { Text("Title") }` supplies visible toolbar content but does not replace `.navigationTitle` as the source of the title text on a subsequent screen's back button. Keep a meaningful `.navigationTitle` even when a custom `.title` item displays the screen heading. Verify back-button text after pushing another screen; the system can shorten it when space is limited.
+
 On iOS 18+, keep `.navigationTitle` and use `.toolbar(removing: .title)` to hide the system title displayed in `.large`, `.inlineLarge`, or `.inline` mode. For example:
 
 ```swift
@@ -178,7 +180,7 @@ When a progress indicator or another custom view should remain visible in `.prin
 
 Custom `ToolbarItem` placements `.largeTitle` and `.largeSubtitle` remain visible with `.toolbar(removing: .title)` in the reported verification. The `.large` navigation-title display mode and the `.largeTitle` toolbar-item placement are different APIs: hiding the system's large navigation title does not imply hiding custom content placed at `.largeTitle`. If that custom content should be hidden, conditionally omit its toolbar item. Verify placement behavior on supported OS versions.
 
-When verifying this behavior, push another screen and long-press its standard back button. Check that the previous screen has a meaningful title in the history menu, and that any custom `.principal` content remains visible where intended.
+When verifying this behavior, push another screen and long-press its standard back button. Check the standard back-button text and that the previous screen has a meaningful title in the history menu, and that any custom `.principal` content remains visible where intended.
 
 References: Apple's [toolbar(removing:)](https://developer.apple.com/documentation/swiftui/view/toolbar(removing:)) and [ToolbarDefaultItemKind.title](https://developer.apple.com/documentation/swiftui/toolbardefaultitemkind/title). The back-history rule comes from [ios-kenko PR #10964](https://github.com/oishi-kenko/ios-kenko/pull/10964). For custom title content, see Apple's [principal placement](https://developer.apple.com/documentation/swiftui/toolbaritemplacement/principal).
 
