@@ -163,12 +163,12 @@ struct RecipeScreen: View {
 
 The `.title` item kind requires iOS 18+, macOS 15+, or visionOS 2+, even though `toolbar(removing:)` itself is older. For earlier deployment targets, gate title removal and keep the title visible as a fallback rather than clearing it.
 
-**Title removal can also hide custom `.principal` content.** This was confirmed with a `Label` in a principal toolbar item:
+**Title removal can also hide custom `.principal` content.** For example, a principal toolbar item can contain a custom title:
 
 ```swift
 .toolbar {
     ToolbarItem(placement: .principal) {
-        Label("Title", systemImage: "house")
+        Text("Title")
     }
 }
 .toolbar(removing: .title)
