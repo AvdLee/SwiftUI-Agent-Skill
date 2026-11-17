@@ -18,6 +18,7 @@ description: Use when writing, reviewing, or refactoring SwiftUI code for iOS or
 - Present performance optimizations as suggestions, not requirements
 - Use `#available` gating with sensible fallbacks for version-specific APIs
 - For layout and rendering inputs, read the value nearest the SwiftUI view that consumes it; do not substitute process-global screen state
+- Give navigation screens meaningful titles even when hidden from the bar; use `.toolbar(removing: .title)` on iOS 18+ to hide the title without clearing it (see `references/sheet-navigation-patterns.md`)
 
 ## Task Workflow
 

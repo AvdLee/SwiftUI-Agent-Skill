@@ -1,5 +1,9 @@
 # SwiftUI Toolbar Patterns
 
+## Hiding the navigation title
+
+Keep a meaningful `.navigationTitle` when hiding its bar display so the screen remains identifiable in the back button's history menu. On iOS 18+, use `.toolbar(removing: .title)` instead of an empty title. This also removes `.principal` items, so omit removal when custom principal content should remain visible. See [navigation title guidance](sheet-navigation-patterns.md#keep-navigation-titles-when-hiding-their-display) for availability, a fallback, and an example.
+
 ## Customizable toolbars (iOS 26+, macOS 26+, tvOS 26+, watchOS 26+, visionOS 26+)
 
 Use `.toolbar(id:)` when people should be able to add, remove, or rearrange toolbar content. Every customizable `ToolbarItem` needs a stable, unique string ID. Keep IDs tied to the meaning of the action rather than to a changing array position.

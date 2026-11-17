@@ -143,6 +143,31 @@ Prefer the item overload for an action tied to an optional value instead of sync
 
 ## Navigation Patterns
 
+### Keep Navigation Titles When Hiding Their Display
+
+Give each navigation screen a meaningful `.navigationTitle`, even when the design does not show it in the bar. On iOS, the back button's long-press menu uses titles to identify earlier screens. Omitting the title or setting it to an empty string makes those destinations difficult to identify.
+
+On iOS 18+, keep `.navigationTitle` and hide its display with `.toolbar(removing: .title)`:
+
+```swift
+@available(iOS 18.0, *)
+struct RecipeScreen: View {
+    var body: some View {
+        RecipeContent()
+            .navigationTitle("Recipe")
+            .toolbar(removing: .title)
+    }
+}
+```
+
+The `.title` item kind requires iOS 18+, macOS 15+, or visionOS 2+, even though `toolbar(removing:)` itself is older. For earlier deployment targets, gate title removal and keep the title visible as a fallback rather than clearing it.
+
+**`.toolbar(removing: .title)` also removes custom `.principal` content.** When a progress indicator or another custom view occupies `.principal`, keep `.navigationTitle` but omit title removal so that custom content remains visible in the title's place.
+
+When verifying this behavior, push another screen and long-press its standard back button. Check that the previous screen has a meaningful title in the history menu, and that any custom `.principal` content remains visible where intended.
+
+References: Apple's [toolbar(removing:)](https://developer.apple.com/documentation/swiftui/view/toolbar(removing:)) and [ToolbarDefaultItemKind.title](https://developer.apple.com/documentation/swiftui/toolbardefaultitemkind/title). The back-history rule and `.principal` caveat come from [ios-kenko PR #10964](https://github.com/oishi-kenko/ios-kenko/pull/10964), which notes that those behaviors were not verified in the simulator.
+
 ### Type-Safe Navigation with NavigationStack
 
 ```swift
@@ -411,6 +436,7 @@ For older `alert` and `confirmationDialog` API patterns, see `latest-apis.md`. P
 - [ ] Sheets own their actions and dismiss internally
 - [ ] Use `NavigationStack` with `navigationDestination(for:)` for type-safe navigation
 - [ ] Use `NavigationPath` for programmatic navigation
+- [ ] Navigation screens retain meaningful titles when hidden; `.toolbar(removing: .title)` is availability-gated and does not remove intended `.principal` content
 - [ ] Use `NavigationSplitView` for sidebar-driven multi-column layouts
 - [ ] `sidebarAdaptable` tab sidebars on iPhone use `defaultTabBarPlacement(_:)` behind `#available(iOS 27.0, *)`, with nested-tab content reachable when no sidebar is shown
 - [ ] Use `Inspector` for trailing-edge supplementary panels
