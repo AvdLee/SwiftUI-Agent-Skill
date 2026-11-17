@@ -1,5 +1,9 @@
 # SwiftUI Toolbar Patterns
 
+## Hiding the navigation title
+
+Keep a meaningful `.navigationTitle` when hiding its bar display so the screen remains identifiable in the back button's history menu. A custom `ToolbarItem(placement: .title)` does not replace `.navigationTitle` for the text on a subsequent screen's back button. On iOS 18+, use `.toolbar(removing: .title)` instead of an empty title. This hides the system title in `.large`, `.inlineLarge`, or `.inline` display mode and can also hide custom `.principal` content. Omit title removal when that custom content should remain visible. Custom items placed at `.largeTitle` or `.largeSubtitle` can remain visible; conditionally omit those items when they should be hidden. Do not confuse the `.large` title display mode with the `.largeTitle` item placement. See [navigation title guidance](sheet-navigation-patterns.md#keep-navigation-titles-when-hiding-their-display) for availability, a fallback, and an example.
+
 ## Customizable toolbars (iOS 26+, macOS 26+, tvOS 26+, watchOS 26+, visionOS 26+)
 
 Use `.toolbar(id:)` when people should be able to add, remove, or rearrange toolbar content. Every customizable `ToolbarItem` needs a stable, unique string ID. Keep IDs tied to the meaning of the action rather than to a changing array position.
