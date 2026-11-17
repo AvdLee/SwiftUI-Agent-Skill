@@ -147,7 +147,7 @@ Prefer the item overload for an action tied to an optional value instead of sync
 
 Give each navigation screen a meaningful `.navigationTitle`, even when the design does not show it in the bar. On iOS, the back button's long-press menu uses titles to identify earlier screens. Omitting the title or setting it to an empty string makes those destinations difficult to identify.
 
-On iOS 18+, keep `.navigationTitle` and use `.toolbar(removing: .title)` to hide the system title displayed in `.large`, `.inlineLarge`, or `.inline` mode. Set the intended mode explicitly:
+On iOS 18+, keep `.navigationTitle` and use `.toolbar(removing: .title)` to hide the system title displayed in `.large`, `.inlineLarge`, or `.inline` mode. For example:
 
 ```swift
 @available(iOS 18.0, *)
@@ -163,7 +163,18 @@ struct RecipeScreen: View {
 
 The `.title` item kind requires iOS 18+, macOS 15+, or visionOS 2+, even though `toolbar(removing:)` itself is older. For earlier deployment targets, gate title removal and keep the title visible as a fallback rather than clearing it.
 
-This guidance concerns the system navigation title in those display modes. Do not treat `.toolbar(removing: .title)` as a way to remove custom `.principal` items. On iOS, custom `.principal` content takes precedence over the navigation title.
+**Title removal can also hide custom `.principal` content.** This was confirmed with a `Label` in a principal toolbar item:
+
+```swift
+.toolbar {
+    ToolbarItem(placement: .principal) {
+        Label("Title", systemImage: "house")
+    }
+}
+.toolbar(removing: .title)
+```
+
+When a progress indicator or another custom view should remain visible in `.principal`, omit `.toolbar(removing: .title)`. Keep a meaningful `.navigationTitle`; on iOS, the custom principal content takes precedence over its visible title. Verify the result on supported OS versions.
 
 When verifying this behavior, push another screen and long-press its standard back button. Check that the previous screen has a meaningful title in the history menu, and that any custom `.principal` content remains visible where intended.
 
@@ -437,7 +448,7 @@ For older `alert` and `confirmationDialog` API patterns, see `latest-apis.md`. P
 - [ ] Sheets own their actions and dismiss internally
 - [ ] Use `NavigationStack` with `navigationDestination(for:)` for type-safe navigation
 - [ ] Use `NavigationPath` for programmatic navigation
-- [ ] Navigation screens retain meaningful titles when hidden; `.toolbar(removing: .title)` is availability-gated and targets the system title in `.large`, `.inlineLarge`, or `.inline` mode
+- [ ] Navigation screens retain meaningful titles when hidden; `.toolbar(removing: .title)` is availability-gated and omitted when custom `.principal` content should remain visible
 - [ ] Use `NavigationSplitView` for sidebar-driven multi-column layouts
 - [ ] `sidebarAdaptable` tab sidebars on iPhone use `defaultTabBarPlacement(_:)` behind `#available(iOS 27.0, *)`, with nested-tab content reachable when no sidebar is shown
 - [ ] Use `Inspector` for trailing-edge supplementary panels
