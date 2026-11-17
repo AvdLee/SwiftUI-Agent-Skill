@@ -176,6 +176,8 @@ The `.title` item kind requires iOS 18+, macOS 15+, or visionOS 2+, even though 
 
 When a progress indicator or another custom view should remain visible in `.principal`, omit `.toolbar(removing: .title)`. Keep a meaningful `.navigationTitle`; on iOS, the custom principal content takes precedence over its visible title. Verify the result on supported OS versions.
 
+Custom `ToolbarItem` placements `.largeTitle` and `.largeSubtitle` remain visible with `.toolbar(removing: .title)` in the reported verification. The `.large` navigation-title display mode and the `.largeTitle` toolbar-item placement are different APIs: hiding the system's large navigation title does not imply hiding custom content placed at `.largeTitle`. If that custom content should be hidden, conditionally omit its toolbar item. Verify placement behavior on supported OS versions.
+
 When verifying this behavior, push another screen and long-press its standard back button. Check that the previous screen has a meaningful title in the history menu, and that any custom `.principal` content remains visible where intended.
 
 References: Apple's [toolbar(removing:)](https://developer.apple.com/documentation/swiftui/view/toolbar(removing:)) and [ToolbarDefaultItemKind.title](https://developer.apple.com/documentation/swiftui/toolbardefaultitemkind/title). The back-history rule comes from [ios-kenko PR #10964](https://github.com/oishi-kenko/ios-kenko/pull/10964). For custom title content, see Apple's [principal placement](https://developer.apple.com/documentation/swiftui/toolbaritemplacement/principal).
